@@ -1,5 +1,5 @@
 # Multi-stage build for optimized Docker image
-FROM rust:1.77-slim as builder
+FROM rust:latest AS builder
 
 # Install build dependencies
 RUN apt-get update && apt-get install -y \
@@ -51,6 +51,7 @@ COPY --from=builder /app/migrations ./migrations
 RUN chmod +x ./cccm
 
 # Set environment variables with defaults
+# Note: Change ADMIN_PASSWORD in production via docker run -e ADMIN_PASSWORD=your_secure_password
 ENV ADMIN_PASSWORD=admin123
 ENV RUST_LOG=info
 ENV DATABASE_PATH=/app/data/config.db
