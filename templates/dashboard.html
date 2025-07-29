@@ -1,0 +1,645 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Claude Code Config Manager - Dashboard</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.min.css">
+    <style>
+        :root {
+            --primary-color: #ff6b35;
+            --secondary-color: #f7931e;
+            --success-color: #2ecc71;
+            --danger-color: #e74c3c;
+        }
+        
+        [data-theme="light"] {
+            --bg-gradient-start: #f5f7fa;
+            --bg-gradient-end: #c3cfe2;
+            --header-bg: rgba(255, 255, 255, 0.9);
+            --card-bg: white;
+            --text-color: #333;
+            --border-color: #e1e8ed;
+            --input-bg: white;
+            --config-url-bg: #f8f9fa;
+            --container-shadow: rgba(0, 0, 0, 0.1);
+        }
+        
+        [data-theme="dark"] {
+            --bg-gradient-start: #1a202c;
+            --bg-gradient-end: #2d3748;
+            --header-bg: rgba(45, 55, 72, 0.9);
+            --card-bg: #2d3748;
+            --text-color: #e2e8f0;
+            --border-color: #4a5568;
+            --input-bg: #4a5568;
+            --config-url-bg: #4a5568;
+            --container-shadow: rgba(0, 0, 0, 0.3);
+        }
+        
+        body {
+            background: linear-gradient(135deg, var(--bg-gradient-start) 0%, var(--bg-gradient-end) 100%);
+            min-height: 100vh;
+            color: var(--text-color);
+            transition: all 0.3s ease;
+        }
+        
+        .header {
+            background: var(--header-bg);
+            backdrop-filter: blur(10px);
+            padding: 1rem 0;
+            margin-bottom: 2rem;
+            box-shadow: 0 4px 6px var(--container-shadow);
+            animation: slideDown 0.6s ease-out;
+        }
+        
+        .theme-toggle {
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 8px;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+            margin-left: 1rem;
+        }
+        
+        .theme-toggle:hover {
+            background: rgba(255, 107, 53, 0.1);
+            transform: scale(1.1);
+        }
+        
+        .theme-toggle svg {
+            width: 24px;
+            height: 24px;
+            fill: var(--text-color);
+        }
+        
+        @keyframes slideDown {
+            from {
+                transform: translateY(-100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+        
+        .config-card {
+            background: var(--card-bg);
+            border-radius: 15px;
+            padding: 1.5rem;
+            margin-bottom: 1rem;
+            box-shadow: 0 4px 6px var(--container-shadow);
+            transition: all 0.3s ease;
+            animation: fadeInUp 0.6s ease-out;
+            animation-fill-mode: both;
+        }
+        
+        .config-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px var(--container-shadow);
+        }
+        
+        @keyframes fadeInUp {
+            from {
+                transform: translateY(30px);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+        
+        .btn-primary {
+            background: linear-gradient(45deg, var(--primary-color), var(--secondary-color));
+            border: none;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 15px rgba(255, 107, 53, 0.3);
+        }
+        
+        .icon-button {
+            background: none;
+            border: none;
+            padding: 8px;
+            cursor: pointer;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .icon-button:hover {
+            transform: translateY(-2px);
+            background: rgba(255, 255, 255, 0.1);
+        }
+        
+        .icon-button.download {
+            color: var(--primary-color);
+        }
+        
+        .icon-button.download:hover {
+            background: rgba(255, 107, 53, 0.1);
+        }
+        
+        .icon-button.copy {
+            color: var(--primary-color);
+        }
+        
+        .icon-button.copy:hover {
+            background: rgba(255, 107, 53, 0.1);
+        }
+        
+        .icon-button.copy-with-password {
+            color: var(--primary-color);
+            position: relative;
+        }
+        
+        .icon-button.copy-with-password:hover {
+            background: rgba(255, 107, 53, 0.1);
+        }
+        
+        .icon-button svg {
+            width: 20px;
+            height: 20px;
+            transition: all 0.3s ease;
+        }
+        
+        .icon-button:hover svg {
+            transform: scale(1.1);
+        }
+        
+        .btn-shimmer::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+            transition: left 0.5s;
+        }
+        
+        .btn-shimmer:hover::before {
+            left: 100%;
+        }
+        
+        .form-container {
+            background: var(--card-bg);
+            border-radius: 15px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 4px 6px var(--container-shadow);
+            animation: fadeIn 0.8s ease-out;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        
+        .pulse {
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0% {
+                box-shadow: 0 0 0 0 rgba(255, 107, 53, 0.4);
+            }
+            70% {
+                box-shadow: 0 0 0 10px rgba(255, 107, 53, 0);
+            }
+            100% {
+                box-shadow: 0 0 0 0 rgba(255, 107, 53, 0);
+            }
+        }
+        
+        .floating {
+            animation: floating 3s ease-in-out infinite;
+        }
+        
+        @keyframes floating {
+            0% { transform: translateY(0px); }
+            50% { transform: translateY(-10px); }
+            100% { transform: translateY(0px); }
+        }
+        
+        .config-url {
+            font-family: 'Courier New', monospace;
+            background: var(--config-url-bg);
+            padding: 0.5rem;
+            border-radius: 5px;
+            border-left: 4px solid var(--primary-color);
+            color: var(--text-color);
+        }
+        
+        .config-actions {
+            display: flex;
+            gap: 1rem;
+            margin-top: 1rem;
+            flex-wrap: wrap;
+        }
+        
+        .logo-header {
+            font-size: 1.5rem;
+            margin-right: 1rem;
+            animation: rotate 4s linear infinite;
+        }
+        
+        @keyframes rotate {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+        
+        .logout-btn {
+            background: none;
+            border: none;
+            color: var(--primary-color);
+            text-decoration: none;
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+        }
+        
+        .logout-btn:hover {
+            background: rgba(255, 107, 53, 0.1);
+            transform: translateY(-1px);
+        }
+        
+        h1, h2, h3, p, label, small {
+            color: var(--text-color);
+        }
+        
+        input[type="text"], input[type="url"], input[type="password"] {
+            background: var(--input-bg);
+            color: var(--text-color);
+            border: 1px solid var(--border-color);
+        }
+        
+        input[type="text"]:focus, input[type="url"]:focus, input[type="password"]:focus {
+            border-color: var(--primary-color);
+        }
+    </style>
+</head>
+<body data-theme="light">
+    <div class="header">
+        <div class="container">
+            <nav>
+                <ul>
+                    <li>
+                        <svg width="30" height="30" viewBox="0 0 1024 1024" xmlns="http://www.w3.org/2000/svg" style="margin-right: 1rem; animation: rotate 4s linear infinite;">
+                            <path d="M252.8 652.8l167.893333-94.293333 2.773334-8.106667-2.773334-4.48h-8.106666l-28.16-1.706667-96-2.56-83.2-3.413333-80.64-4.266667-20.266667-4.266666L85.333333 504.746667l1.92-12.586667 17.066667-11.52 24.32 2.133333 53.973333 3.626667 81.066667 5.546667 58.666667 3.413333 87.04 9.173333h13.866666l1.92-5.546666-4.693333-3.413334-3.626667-3.413333-83.84-56.746667-90.666666-60.16-47.573334-34.56-25.813333-17.493333-13.013333-16.426667-5.546667-35.84 23.253333-25.813333 31.36 2.133333 7.893334 2.133334 31.786666 24.32 67.84 52.48L401.066667 391.466667l13.013333 10.88 5.12-3.626667 0.64-2.56-5.76-9.813333-48.213333-87.04L314.453333 210.773333l-22.826666-36.693333-5.973334-21.973333a107.861333 107.861333 0 0 1-3.626666-26.026667l26.666666-36.053333L323.413333 85.333333l35.413334 4.693334 14.933333 13.013333 21.973333 50.346667 35.626667 79.36 55.253333 107.733333 16.213334 32 8.746666 29.653333 3.2 9.173334h5.546667v-5.12l4.48-60.8 8.32-74.453334 8.106667-96 2.773333-27.093333 13.44-32.426667 26.666667-17.493333 20.693333 10.026667 17.066667 24.32-2.346667 15.786666-10.24 65.92-19.84 103.253334-13.013333 69.12h7.466666l8.746667-8.746667 34.986667-46.506667 58.666666-73.386666 26.026667-29.226667 30.293333-32.213333 19.413334-15.36h36.693333l27.093333 40.106666-12.16 41.386667-37.76 48-31.36 40.533333-45.013333 60.586667-28.16 48.426667 2.56 3.84 6.613333-0.64 101.546667-21.546667 54.826667-10.026667 65.493333-11.306666 29.653333 13.866666 3.2 14.08-11.733333 28.8-69.973333 17.28-82.133334 16.426667-122.24 29.013333-1.493333 1.066667 1.706667 2.133333 55.04 5.12 23.466666 1.28h57.6l107.306667 7.893334 28.16 18.56 16.853333 22.613333-2.773333 17.28-43.306667 21.973333-58.24-13.866666-136.106666-32.426667-46.72-11.733333h-6.4v3.84l38.826666 37.973333 71.253334 64.426667 89.173333 82.986666 4.48 20.48-11.52 16.213334-12.16-1.706667-78.506667-58.88-30.293333-26.666667-68.48-57.6h-4.48v5.973334l15.786667 23.04 83.413333 125.226666 4.266667 38.4-5.973334 12.586667-21.546666 7.466667-23.68-4.266667-48.853334-68.48-50.346666-77.226667-40.533334-69.12-4.906666 2.773334-23.893334 258.133333-11.306666 13.226667-26.026667 10.026666-21.546667-16.426666-11.52-26.666667 11.52-52.48 13.866667-68.48 11.306667-54.4 10.24-67.626667 5.973333-22.4-0.426667-1.493333-4.906666 0.64-50.986667 69.973333-77.653333 104.746667-61.44 65.706667-14.72 5.76-25.386667-13.226667 2.346667-23.466667 14.293333-20.906666 84.906667-107.946667 51.2-66.986667 33.066666-38.613333v-5.546667h-2.133333l-225.493333 146.56-40.106667 5.12-17.28-16.213333 2.133333-26.666667 8.106667-8.746666 67.84-46.72h-0.213333l0.853333 0.853333z" fill="#ff6b35"/>
+                        </svg>
+                        <strong>Claude Code Config Manager</strong>
+                    </li>
+                </ul>
+                <ul>
+                    <li>
+                        <button class="theme-toggle" onclick="toggleTheme()" title="Toggle theme">
+                            <svg id="light-icon" viewBox="0 0 1024 1024" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M504 688c97.2 0 176-78.8 176-176s-78.8-176-176-176-176 78.8-176 176 78.8 176 176 176z m0 48c-123.712 0-224-100.288-224-224s100.288-224 224-224 224 100.288 224 224-100.288 224-224 224z m0-576h16a16 16 0 0 1 16 16v64a16 16 0 0 1-16 16h-16a16 16 0 0 1-16-16v-64a16 16 0 0 1 16-16z m251.248 97.44l11.312 11.312a16 16 0 0 1 0 22.624L721.28 336.64a16 16 0 0 1-22.624 0l-11.312-11.312a16 16 0 0 1 0-22.624l45.264-45.264a16 16 0 0 1 22.624 0zM864 504v16a16 16 0 0 1-16 16h-64a16 16 0 0 1-16-16v-16a16 16 0 0 1 16-16h64a16 16 0 0 1 16 16z m-97.44 251.248l-11.312 11.312a16 16 0 0 1-22.624 0L687.36 721.28a16 16 0 0 1 0-22.624l11.312-11.312a16 16 0 0 1 22.624 0l45.264 45.264a16 16 0 0 1 0 22.624zM520 864h-16a16 16 0 0 1-16-16v-64a16 16 0 0 1 16-16h16a16 16 0 0 1 16 16v64a16 16 0 0 1-16 16z m-251.248-97.44l-11.312-11.312a16 16 0 0 1 0-22.624l45.264-45.264a16 16 0 0 1 22.624 0l11.312 11.312a16 16 0 0 1 0 22.624L291.36 766.56a16 16 0 0 1-22.624 0zM160 520v-16a16 16 0 0 1 16-16h64a16 16 0 0 1 16 16v16a16 16 0 0 1-16 16h-64a16 16 0 0 1-16-16z m97.44-251.248l11.312-11.312a16 16 0 0 1 22.624 0l45.264 45.264a16 16 0 0 1 0 22.624l-11.312 11.312a16 16 0 0 1-22.624 0L257.44 291.36a16 16 0 0 1 0-22.624z"/>
+                            </svg>
+                            <svg id="dark-icon" viewBox="0 0 1024 1024" xmlns="http://www.w3.org/2000/svg" style="display: none;">
+                                <path d="M512 836.266667c-179.2 0-324.266667-145.066667-324.266667-324.266667s145.066667-324.266667 324.266667-324.266667 324.266667 145.066667 324.266667 324.266667-145.066667 324.266667-324.266667 324.266667z m0-580.266667c-141.653333 0-256 114.346667-256 256s114.346667 256 256 256 256-114.346667 256-256-114.346667-256-256-256zM512 141.653333c-18.773333 0-34.133333-15.36-34.133333-34.133333V34.133333c0-18.773333 15.36-34.133333 34.133333-34.133333s34.133333 15.36 34.133333 34.133333v73.386667c0 18.773333-15.36 34.133333-34.133333 34.133333zM512 1024c-18.773333 0-34.133333-15.36-34.133333-34.133333v-73.386667c0-18.773333 15.36-34.133333 34.133333-34.133333s34.133333 15.36 34.133333 34.133333V989.866667c0 18.773333-15.36 34.133333-34.133333 34.133333zM226.986667 259.413333c-8.533333 0-17.066667-3.413333-23.893334-10.24l-51.2-51.2c-13.653333-13.653333-13.653333-34.133333 0-47.786666 13.653333-13.653333 34.133333-13.653333 47.786667 0l51.2 51.2c13.653333 13.653333 13.653333 34.133333 0 47.786666-6.826667 8.533333-15.36 10.24-23.893333 10.24zM849.92 884.053333c-8.533333 0-17.066667-3.413333-23.893333-10.24l-52.906667-51.2c-13.653333-13.653333-13.653333-34.133333 0-47.786666 13.653333-13.653333 34.133333-13.653333 47.786667 0l52.906666 51.2c13.653333 13.653333 13.653333 34.133333 0 47.786666-6.826667 6.826667-15.36 10.24-23.893333 10.24zM107.52 546.133333H34.133333c-18.773333 0-34.133333-15.36-34.133333-34.133333s15.36-34.133333 34.133333-34.133333h73.386667c18.773333 0 34.133333 15.36 34.133333 34.133333s-15.36 34.133333-34.133333 34.133333zM989.866667 546.133333h-73.386667c-18.773333 0-34.133333-15.36-34.133333-34.133333s15.36-34.133333 34.133333-34.133333H989.866667c18.773333 0 34.133333 15.36 34.133333 34.133333s-15.36 34.133333-34.133333 34.133333z"/>
+                                <path d="M174.08 884.053333c-8.533333 0-17.066667-3.413333-23.893333-10.24-13.653333-13.653333-13.653333-34.133333 0-47.786666l51.2-51.2c13.653333-13.653333 34.133333-13.653333 47.786666 0 13.653333 13.653333 13.653333 34.133333 0 47.786666l-51.2 51.2c-6.826667 6.826667-15.36 10.24-23.893333 10.24zM797.013333 259.413333c-8.533333 0-17.066667-3.413333-23.893333-10.24-13.653333-13.653333-13.653333-34.133333 0-47.786666l52.906667-51.2c13.653333-13.653333 34.133333-13.653333 47.786666 0 13.653333 13.653333 13.653333 34.133333 0 47.786666l-52.906666 51.2c-5.12 8.533333-13.653333 10.24-23.893334 10.24z"/>
+                                <path d="M512 221.866667c-27.306667 0-54.613333 3.413333-80.213333 11.946666-34.133333 44.373333-56.32 98.986667-56.32 158.72 0 141.653333 114.346667 256 256 256 59.733333 0 114.346667-20.48 158.72-56.32 6.826667-25.6 11.946667-52.906667 11.946666-80.213333 0-160.426667-129.706667-290.133333-290.133333-290.133333z"/>
+                            </svg>
+                        </button>
+                    </li>
+                    <li>
+                        <select id="language-selector" onchange="changeLanguage()" style="background: none; border: 1px solid var(--border-color); color: var(--text-color); padding: 0.5rem; border-radius: 8px; margin-left: 1rem;">
+                            <option value="en">English</option>
+                            <option value="zh">中文</option>
+                        </select>
+                    </li>
+                    <li><a href="/logout" class="logout-btn">Logout</a></li>
+                </ul>
+            </nav>
+        </div>
+    </div>
+    
+    <div class="container">
+        <div class="form-container floating">
+            <h2>Add New Configuration</h2>
+            <form id="configForm">
+                <div class="grid">
+                    <label for="name">
+                        Configuration Name
+                        <input type="text" id="name" name="name" placeholder="My Claude Config" required>
+                    </label>
+                    <label for="anthropic_base_url">
+                        Anthropic Base URL
+                        <input type="url" id="anthropic_base_url" name="anthropic_base_url" placeholder="https://api.anthropic.com" required>
+                    </label>
+                </div>
+                <div class="grid">
+                    <label for="anthropic_api_key">
+                        API Key (Optional)
+                        <input type="password" id="anthropic_api_key" name="anthropic_api_key" placeholder="sk-ant-...">
+                    </label>
+                    <label for="anthropic_auth_token">
+                        Auth Token (Optional)
+                        <input type="password" id="anthropic_auth_token" name="anthropic_auth_token" placeholder="Bearer token...">
+                    </label>
+                </div>
+                <div class="grid">
+                    <label for="access_password">
+                        Access Password (Optional)
+                        <input type="password" id="access_password" name="access_password" placeholder="Download protection password">
+                        <small>If set, users need this password to download the script</small>
+                    </label>
+                </div>
+                <button type="submit" class="btn-primary btn-shimmer pulse">Add Configuration</button>
+            </form>
+        </div>
+        
+        <h2>Existing Configurations</h2>
+        {% if configs.is_empty() %}
+        <div class="config-card">
+            <p style="text-align: center; color: #666;">No configurations yet. Add your first one above! 🚀</p>
+        </div>
+        {% else %}
+        {% for config in configs %}
+        <div class="config-card" style="animation-delay: {{ loop.index * 100 }}ms;">
+            <h3>{{ config.name }}</h3>
+            <div class="config-url">{{ config.anthropic_base_url }}</div>
+            <p>
+                <strong>Auth Method:</strong> 
+                {% if config.anthropic_api_key.is_some() %}
+                API Key (••••••••)
+                {% else if config.anthropic_auth_token.is_some() %}
+                Auth Token (••••••••)
+                {% else %}
+                No authentication configured
+                {% endif %}
+                {% if config.access_password.is_some() %}
+                <span style="color: #ff6b35; margin-left: 1rem;">🔒 Password Protected</span>
+                {% endif %}
+            </p>
+            <p><small>Created: {{ config.created_at.format("%Y-%m-%d %H:%M:%S") }}</small></p>
+            
+            <div class="config-actions">
+                <a href="/download/{{ config.id }}" class="icon-button download" title="Download Script">
+                    <svg viewBox="0 0 1220 1024" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M600.989176 0C569.513691 0 543.968467 25.485345 543.932546 56.923835L543.36707 551.314562C494.339088 505.555172 396.403891 414.148901 396.403891 414.148901 373.434921 392.711249 337.436282 393.952581 315.998598 416.921502 294.560914 439.890424 295.80223 475.889079 318.7712 497.326746L550.656163 713.752787C579.096218 740.296737 623.672401 740.320516 652.137813 713.752787L884.022938 497.326746C906.991746 475.889079 908.233224 439.890424 886.79554 416.921502 865.357857 393.952581 829.359218 392.711249 806.390248 414.148901 806.390248 414.148901 706.630217 507.258214 656.66048 553.896732L656.66048 56.931799C656.66048 25.489245 631.095426 0 599.668866 0L600.989176 0 600.989176 0 600.989176 0ZM113.777778 902.095238 113.777778 520.126984C113.777778 488.708112 88.30781 463.238095 56.888889 463.238095 25.469968 463.238095 0 488.708112 0 520.126984L0 934.565758C0 979.470515 36.483657 1015.873016 81.402961 1015.873016L1137.644658 1015.873016C1182.602159 1015.873016 1219.047619 979.419624 1219.047619 934.565758L1219.047619 520.126984C1219.047619 488.708112 1193.577651 463.238095 1162.15873 463.238095 1130.73981 463.238095 1105.269841 488.708112 1105.269841 520.126984L1105.269841 902.095238 113.777778 902.095238 113.777778 902.095238Z" fill="currentColor"/>
+                    </svg>
+                </a>
+                
+                <button onclick="copyLink('{{ config.id }}', false)" class="icon-button copy" title="Copy Link">
+                    <svg viewBox="0 0 1024 1024" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M832 128c-12.8-76.8-76.8-128-160-128h-448C102.4 0 0 102.4 0 224v448c0 76.8 57.6 140.8 128 160 12.8 76.8 76.8 128 160 128h512c89.6 0 160-70.4 160-160v-512c0-76.8-57.6-140.8-128-160zM64 672v-448C64 134.4 134.4 64 224 64h448c44.8 0 76.8 25.6 89.6 64H288C198.4 128 128 198.4 128 288v473.6c-38.4-12.8-64-44.8-64-89.6z m832 128c0 51.2-44.8 96-96 96h-512c-51.2 0-96-44.8-96-96v-512C192 236.8 236.8 192 288 192h512c51.2 0 96 44.8 96 96v512z" fill="currentColor"/>
+                    </svg>
+                </button>
+                
+                {% if config.access_password.is_some() %}
+                <button onclick="copyLink('{{ config.id }}', true)" class="icon-button copy-with-password" title="Copy Link with Password">
+                    <svg viewBox="0 0 1024 1024" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M832 128c-12.8-76.8-76.8-128-160-128h-448C102.4 0 0 102.4 0 224v448c0 76.8 57.6 140.8 128 160 12.8 76.8 76.8 128 160 128h512c89.6 0 160-70.4 160-160v-512c0-76.8-57.6-140.8-128-160zM64 672v-448C64 134.4 134.4 64 224 64h448c44.8 0 76.8 25.6 89.6 64H288C198.4 128 128 198.4 128 288v473.6c-38.4-12.8-64-44.8-64-89.6z m832 128c0 51.2-44.8 96-96 96h-512c-51.2 0-96-44.8-96-96v-512C192 236.8 236.8 192 288 192h512c51.2 0 96 44.8 96 96v512z" fill="currentColor"/>
+                    </svg>
+                    <svg viewBox="0 0 1024 1024" xmlns="http://www.w3.org/2000/svg" style="position: absolute; top: -2px; right: -2px; width: 12px; height: 12px; background: #ff6b35; border-radius: 50%; padding: 2px;">
+                        <path d="M288 376c0-8.188 1.25-16 3.625-23.312C294.688 240.188 389.812 160 504 160c106.875 0 197.438 64.688 236 156.188C747.313 328.5 752 344.875 752 362.687V376c57.438 6.125 102 53.813 102 112v272c0 61.75-50.25 112-112 112H282c-61.75 0-112-50.25-112-112V488c0-58.187 44.563-105.875 102-112z m56 0h336V362.687c0-10.875-2.75-21.187-7.563-30.5C637.812 254.375 576.438 208 504 208c-85.25 0-156.188 57.938-175.312 136.063C326.25 351.312 328 358.813 328 366.687V376z m-56 56c-30.875 0-56 25.125-56 56v272c0 30.875 25.125 56 56 56h460c30.875 0 56-25.125 56-56V488c0-30.875-25.125-56-56-56H272z" fill="white"/>
+                    </svg>
+                </button>
+                {% endif %}
+                
+                <button onclick="deleteConfig('{{ config.id }}')" class="icon-button delete" title="Delete Configuration">
+                    <svg viewBox="0 0 1024 1024" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M690.604651 72.442047H332.276093c-19.765581 0-35.72093-15.955349-35.72093-35.720931s15.955349-35.72093 35.72093-35.72093H690.604651c19.765581 0 35.72093 15.955349 35.72093 35.72093s-15.955349 35.72093-35.72093 35.720931z m284.648186 143.00279H47.627907c-19.765581 0-35.72093-15.955349-35.72093-35.72093s15.955349-35.72093 35.72093-35.72093h927.62493c19.765581 0 35.72093 15.955349 35.72093 35.72093s-15.955349 35.72093-35.72093 35.72093z m-106.043535 714.418605v-535.813954c0-19.765581-15.955349-35.72093-35.72093-35.72093s-35.72093 15.955349-35.72093 35.72093v535.813954H226.232558v-714.418605H154.790698v714.418605c0 39.412093 32.029767 71.44186 71.44186 71.44186h571.534884c39.412093 0 71.44186-32.029767 71.44186-71.44186z" fill="currentColor"/>
+                        <path d="M404.837209 786.765395c-19.765581 0-35.72093-15.955349-35.72093-35.72093V394.049488c0-19.765581 15.955349-35.72093 35.72093-35.72093s35.72093 15.955349 35.720931 35.72093v356.971163c0 19.765581-16.074419 35.72093-35.720931 35.72093z m214.325582 0c-19.765581 0-35.72093-15.955349-35.720931-35.72093V394.049488c0-19.765581 15.955349-35.72093 35.720931-35.72093s35.72093 15.955349 35.72093 35.72093v356.971163c0 19.765581-16.074419 35.72093-35.72093 35.72093z" fill="currentColor"/>
+                    </svg>
+                </button>
+            </div>
+        </div>
+        {% endfor %}
+        {% endif %}
+    </div>
+    
+    <script>
+        // Theme management
+        function toggleTheme() {
+            const body = document.body;
+            const currentTheme = body.getAttribute('data-theme');
+            const newTheme = currentTheme === 'light' ? 'dark' : 'light';
+            
+            body.setAttribute('data-theme', newTheme);
+            localStorage.setItem('theme', newTheme);
+            
+            // Toggle icons
+            const lightIcon = document.getElementById('light-icon');
+            const darkIcon = document.getElementById('dark-icon');
+            
+            if (newTheme === 'dark') {
+                lightIcon.style.display = 'none';
+                darkIcon.style.display = 'block';
+            } else {
+                lightIcon.style.display = 'block';
+                darkIcon.style.display = 'none';
+            }
+        }
+        
+        // Initialize theme from localStorage
+        document.addEventListener('DOMContentLoaded', function() {
+            const savedTheme = localStorage.getItem('theme') || 'light';
+            document.body.setAttribute('data-theme', savedTheme);
+            
+            const lightIcon = document.getElementById('light-icon');
+            const darkIcon = document.getElementById('dark-icon');
+            
+            if (savedTheme === 'dark') {
+                lightIcon.style.display = 'none';
+                darkIcon.style.display = 'block';
+            } else {
+                lightIcon.style.display = 'block';
+                darkIcon.style.display = 'none';
+            }
+            
+            // Initialize language
+            const savedLang = localStorage.getItem('language') || 'en';
+            document.getElementById('language-selector').value = savedLang;
+        });
+        
+        // Language switching
+        function changeLanguage() {
+            const selector = document.getElementById('language-selector');
+            const newLang = selector.value;
+            localStorage.setItem('language', newLang);
+            
+            // Reload page with language parameter
+            const url = new URL(window.location);
+            url.searchParams.set('lang', newLang);
+            window.location.href = url.toString();
+        }
+        
+        // Original form handling code
+        document.getElementById('configForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const formData = new FormData(e.target);
+            const data = {
+                name: formData.get('name'),
+                anthropic_base_url: formData.get('anthropic_base_url'),
+                anthropic_api_key: formData.get('anthropic_api_key') || null,
+                anthropic_auth_token: formData.get('anthropic_auth_token') || null,
+                access_password: formData.get('access_password') || null
+            };
+            
+            // Validate that at least one auth method is provided
+            if (!data.anthropic_api_key && !data.anthropic_auth_token) {
+                alert('Please provide either an API Key or Auth Token');
+                return;
+            }
+            
+            try {
+                const response = await fetch('/api/configs', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(data)
+                });
+                
+                if (response.ok) {
+                    location.reload();
+                } else {
+                    alert('Error creating configuration');
+                }
+            } catch (error) {
+                alert('Error: ' + error.message);
+            }
+        });
+        
+        async function deleteConfig(id) {
+            if (confirm('Are you sure you want to delete this configuration?')) {
+                try {
+                    const response = await fetch(`/api/configs/${id}`, {
+                        method: 'DELETE'
+                    });
+                    
+                    if (response.ok) {
+                        location.reload();
+                    } else {
+                        alert('Error deleting configuration');
+                    }
+                } catch (error) {
+                    alert('Error: ' + error.message);
+                }
+            }
+        }
+        
+        // Copy link functionality
+        async function copyLink(configId, includePassword) {
+            let url = `${window.location.origin}/download/${configId}`;
+            
+            if (includePassword) {
+                // Get the password for this config
+                const password = await getConfigPassword(configId);
+                if (password) {
+                    url += `?password=${encodeURIComponent(password)}`;
+                } else {
+                    // If we can't get the password, show error
+                    showToast('Unable to copy link with password', 'error');
+                    return;
+                }
+            }
+            
+            try {
+                await navigator.clipboard.writeText(url);
+                showToast('Link copied to clipboard!', 'success');
+            } catch (err) {
+                // Fallback for older browsers
+                const textArea = document.createElement('textarea');
+                textArea.value = url;
+                document.body.appendChild(textArea);
+                textArea.focus();
+                textArea.select();
+                try {
+                    document.execCommand('copy');
+                    showToast('Link copied to clipboard!', 'success');
+                } catch (fallbackErr) {
+                    showToast('Failed to copy link', 'error');
+                }
+                document.body.removeChild(textArea);
+            }
+        }
+        
+        // Get config password (this would need to be implemented server-side)
+        async function getConfigPassword(configId) {
+            try {
+                const response = await fetch(`/api/configs/${configId}/password`);
+                if (response.ok) {
+                    const data = await response.json();
+                    return data.password;
+                }
+            } catch (error) {
+                console.error('Error getting config password:', error);
+            }
+            return null;
+        }
+        
+        // Toast notification function
+        function showToast(message, type = 'info') {
+            // Remove existing toast
+            const existingToast = document.querySelector('.toast');
+            if (existingToast) {
+                existingToast.remove();
+            }
+            
+            // Create toast element
+            const toast = document.createElement('div');
+            toast.className = `toast toast-${type}`;
+            toast.textContent = message;
+            toast.style.cssText = `
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                background: ${type === 'success' ? '#2ecc71' : type === 'error' ? '#e74c3c' : '#3498db'};
+                color: white;
+                padding: 12px 20px;
+                border-radius: 8px;
+                box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+                z-index: 10000;
+                animation: slideInRight 0.3s ease-out;
+                font-size: 14px;
+                max-width: 300px;
+            `;
+            
+            // Add animation keyframes if not already added
+            if (!document.querySelector('#toast-animations')) {
+                const style = document.createElement('style');
+                style.id = 'toast-animations';
+                style.textContent = `
+                    @keyframes slideInRight {
+                        from { transform: translateX(100%); opacity: 0; }
+                        to { transform: translateX(0); opacity: 1; }
+                    }
+                    @keyframes slideOutRight {
+                        from { transform: translateX(0); opacity: 1; }
+                        to { transform: translateX(100%); opacity: 0; }
+                    }
+                `;
+                document.head.appendChild(style);
+            }
+            
+            document.body.appendChild(toast);
+            
+            // Auto remove after 3 seconds
+            setTimeout(() => {
+                toast.style.animation = 'slideOutRight 0.3s ease-out forwards';
+                setTimeout(() => {
+                    if (toast.parentNode) {
+                        toast.parentNode.removeChild(toast);
+                    }
+                }, 300);
+            }, 3000);
+        }
+    </script>
+</body>
+</html>

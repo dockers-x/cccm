@@ -1,0 +1,22 @@
+[package]
+name = "cccm"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+axum = "0.7"
+axum-extra = { version = "0.9", features = ["cookie", "form"] }
+tokio = { version = "1.0", features = ["full"] }
+tower = "0.4"
+tower-http = { version = "0.5", features = ["fs", "cors"] }
+tower-cookies = "0.10"
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+sqlx = { version = "0.7", features = ["runtime-tokio-rustls", "sqlite", "chrono", "uuid", "migrate"] }
+chrono = { version = "0.4", features = ["serde"] }
+uuid = { version = "1.0", features = ["v4", "serde"] }
+bcrypt = "0.15"
+askama = "0.12"
+askama_axum = "0.4"
+anyhow = "1.0"
+time = "0.3"

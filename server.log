@@ -1,0 +1,61 @@
+   Compiling cccm v0.1.0 (/Users/czyt/code/rust/cccm)
+warning: function `verify_config_access` is never used
+  --> src/auth.rs:17:8
+   |
+17 | pub fn verify_config_access(provided_password: Option<&str>, config_password: Option<&str>) -> bool {
+   |        ^^^^^^^^^^^^^^^^^^^^
+   |
+   = note: `#[warn(dead_code)]` on by default
+
+warning: fields `name`, `anthropic_base_url`, `anthropic_api_key`, `anthropic_auth_token`, and `access_password` are never read
+  --> src/models/mod.rs:29:9
+   |
+28 | pub struct UpdateConfigRequest {
+   |            ------------------- fields in this struct
+29 |     pub name: Option<String>,
+   |         ^^^^
+30 |     pub anthropic_base_url: Option<String>,
+   |         ^^^^^^^^^^^^^^^^^^
+31 |     pub anthropic_api_key: Option<String>,
+   |         ^^^^^^^^^^^^^^^^^
+32 |     pub anthropic_auth_token: Option<String>,
+   |         ^^^^^^^^^^^^^^^^^^^^
+33 |     pub access_password: Option<String>,
+   |         ^^^^^^^^^^^^^^^
+   |
+   = note: `UpdateConfigRequest` has a derived impl for the trait `Debug`, but this is intentionally ignored during dead code analysis
+
+warning: field `current_lang` is never read
+ --> src/i18n.rs:7:5
+  |
+5 | pub struct I18n {
+  |            ---- field in this struct
+6 |     messages: HashMap<String, HashMap<String, String>>,
+7 |     current_lang: String,
+  |     ^^^^^^^^^^^^
+  |
+  = note: `I18n` has derived impls for the traits `Clone` and `Debug`, but these are intentionally ignored during dead code analysis
+
+warning: methods `set_language`, `t`, and `current_language` are never used
+  --> src/i18n.rs:35:12
+   |
+15 | impl I18n {
+   | --------- methods in this implementation
+...
+35 |     pub fn set_language(&mut self, lang: &str) {
+   |            ^^^^^^^^^^^^
+...
+41 |     pub fn t(&self, key: &str) -> String {
+   |            ^
+...
+56 |     pub fn current_language(&self) -> &str {
+   |            ^^^^^^^^^^^^^^^^
+
+warning: `cccm` (bin "cccm") generated 4 warnings
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 3.85s
+     Running `target/debug/cccm`
+🤖 Starting Claude Code Config Manager...
+✅ Database initialized
+🚀 Server starting on http://0.0.0.0:3000
+⚠️  Using default admin password: admin123
+   Set ADMIN_PASSWORD environment variable for production
