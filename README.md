@@ -1,118 +1,241 @@
 # Claude Code Configuration Manager (CCCM)
 
-一个现代化的Claude Code配置管理Web应用，使用Rust + Axum构建，支持一键脚本下载和访问控制。
+A modern web application for managing Claude Code configurations, built with Rust + Axum, featuring one-click script downloads and multilingual support.
 
-## ✨ 主要特性
+[中文](README_CN.md) | **English**
 
-### 🔐 安全认证
-- **管理员密码**: 支持环境变量 `ADMIN_PASSWORD` 设置（默认: admin123）
-- **配置访问控制**: 每个配置可设置独立的访问密码
-- **URL密码验证**: 下载时通过URL参数验证访问权限
+## ✨ Key Features
 
-### 🎨 现代化界面
-- **SVG图标**: 使用自定义SVG图标替代文字按钮
-- **Pico CSS**: 简洁现代的界面设计
-- **CSS动画**: 丰富的交互动画效果
-- **响应式设计**: 支持移动端访问
+### 🌍 Multilingual Support
+- **Language Toggle**: Switch between English and Chinese on all pages
+- **Internationalization**: Full i18n support with persistent language preferences
+- **Login Interface**: Language selection available on login page
 
-### 📋 配置管理
-- **CRUD操作**: 完整的配置增删改查功能
-- **多种认证**: 支持API Key和Auth Token
-- **一键脚本**: 动态生成bash配置脚本
-- **即时下载**: wget/curl直接下载配置脚本
+### 🔐 Security & Authentication
+- **Admin Password**: Configurable via `ADMIN_PASSWORD` environment variable (default: admin123)
+- **Per-Config Access Control**: Individual access passwords for each configuration
+- **URL Parameter Validation**: Password verification through URL parameters
 
-## 🚀 快速开始
+### 🎨 Modern Interface
+- **Custom SVG Icons**: Professional iconography throughout the interface
+- **Pico CSS**: Clean, modern design framework
+- **Rich Animations**: Smooth interactive animations and transitions
+- **Responsive Design**: Mobile-friendly interface
 
-### 运行应用
+### ⚙️ Flexible Script Generation
+- **Environment Variables**: Generate scripts that use environment variables
+- **Config File Method**: Traditional settings.json configuration approach
+- **User Choice**: Let users choose their preferred setup method
+- **Auto-Detection**: Smart shell detection and configuration
+
+### 📋 Configuration Management
+- **CRUD Operations**: Complete configuration lifecycle management
+- **Multiple Auth Methods**: Support for both API Keys and Auth Tokens
+- **One-Click Scripts**: Dynamically generated bash configuration scripts
+- **Instant Downloads**: Direct download via wget/curl
+
+## 🚀 Quick Start
+
+### Running the Application
+
+**Using Cargo:**
 ```bash
-# 使用默认密码启动
+# Run with default password
 cargo run
 
-# 使用自定义管理员密码
+# Run with custom admin password
 ADMIN_PASSWORD=my_secure_password cargo run
 ```
 
-### 访问应用
-- 打开浏览器访问: `http://localhost:3000`
-- 使用管理员密码登录（默认: admin123）
+**Using Docker:**
+```bash
+# Simple Docker run
+docker build -t cccm .
+docker run -p 3000:3000 -e ADMIN_PASSWORD=your_password cccm
 
-## 📖 使用说明
+# Using docker-compose
+docker-compose up -d
+```
 
-### 1. 添加配置
-1. 登录管理后台
-2. 填写配置信息：
-   - **配置名称**: 易识别的名称
-   - **Anthropic Base URL**: API端点地址
-   - **API Key / Auth Token**: 二选一填写
-   - **访问密码**: 可选，用于下载保护
+### Accessing the Application
+- Open browser and navigate to: `http://localhost:3000`
+- Login with admin password (default: admin123)
+- Switch language using the language selector in the top-right corner
 
-### 2. 下载脚本
-**无密码保护的配置:**
+## 📖 Usage Guide
+
+### 1. Adding a Configuration
+1. Login to the admin dashboard
+2. Fill in the configuration details:
+   - **Configuration Name**: Easily identifiable name
+   - **Anthropic Base URL**: API endpoint address
+   - **API Key / Auth Token**: Choose one authentication method
+   - **Access Password**: Optional, for download protection
+   - **Setup Method**: Choose between environment variables or config file
+
+### 2. Downloading Scripts
+
+**For configurations without password protection:**
 ```bash
 curl -O http://localhost:3000/download/{config_id}
-# 或
+# or
 wget http://localhost:3000/download/{config_id}
 ```
 
-**有密码保护的配置:**
+**For password-protected configurations:**
 ```bash
 curl -O "http://localhost:3000/download/{config_id}?password=your_password"
-# 或
+# or
 wget "http://localhost:3000/download/{config_id}?password=your_password"
 ```
 
-### 3. 执行配置脚本
+### 3. Running Configuration Scripts
 ```bash
 chmod +x setup_*.sh
 ./setup_*.sh
 ```
 
-## 🔧 环境变量
+## 🔧 Environment Variables
 
-| 变量名 | 描述 | 默认值 |
-|--------|------|--------|
-| `ADMIN_PASSWORD` | 管理员登录密码 | admin123 |
+| Variable | Description | Default |
+|----------|-------------|---------|
+| `ADMIN_PASSWORD` | Admin login password | admin123 |
+| `DATABASE_PATH` | SQLite database file path | ./config.db |
+| `RUST_LOG` | Logging level | info |
+| `TZ` | Timezone | UTC |
 
-## 🏗️ 技术栈
+## 🐳 Docker Deployment
 
-- **后端**: Rust + Axum + SQLite3
-- **前端**: HTML + CSS + JavaScript + Pico CSS
-- **模板**: Askama
-- **数据库**: SQLite3（自动初始化）
+### Basic Docker Compose
+```yaml
+version: '3.8'
+services:
+  cccm:
+    build: .
+    ports:
+      - "3000:3000"
+    environment:
+      - ADMIN_PASSWORD=your_secure_password
+      - DATABASE_PATH=/app/data/config.db
+    volumes:
+      - cccm_data:/app/data
+    restart: unless-stopped
 
-## 📁 项目结构
+volumes:
+  cccm_data:
+```
+
+### Production with Nginx
+Use `docker-compose.production.yml` for a production setup with Nginx reverse proxy:
+
+```bash
+cp .env.example .env  # Configure your environment
+docker-compose -f docker-compose.production.yml up -d
+```
+
+## 🏗️ Technology Stack
+
+- **Backend**: Rust + Axum + SQLite3
+- **Frontend**: HTML + CSS + JavaScript + Pico CSS
+- **Templates**: Askama template engine
+- **Database**: SQLite3 with automatic migrations
+- **Internationalization**: JSON-based message files
+- **Docker**: Multi-stage builds with optimized images
+
+## 📁 Project Structure
 
 ```
 src/
-├── main.rs           # 主程序入口
-├── auth.rs           # 认证模块
-├── database.rs       # 数据库初始化
-├── handlers/         # HTTP处理器
-├── models/           # 数据模型
-└── templates/        # HTML模板
-    ├── login.html    # 登录页面
-    └── dashboard.html # 管理面板
+├── main.rs              # Application entry point
+├── auth.rs             # Authentication module
+├── database.rs         # Database initialization
+├── i18n.rs             # Internationalization
+├── handlers/           # HTTP request handlers
+├── models/             # Data models
+└── templates/          # HTML templates
+    ├── login.html      # Login page
+    ├── dashboard.html  # Management dashboard
+    └── download_password.html # Password input page
+
+locales/
+├── en.json             # English translations
+└── zh.json             # Chinese translations
+
+migrations/             # Database migrations
+nginx/                  # Nginx configuration files
 ```
 
-## 🔒 安全特性
+## 🔒 Security Features
 
-- **密码保护**: 管理后台需要密码登录
-- **配置级访问控制**: 每个配置可独立设置访问密码
-- **会话管理**: 基于Cookie的会话控制
-- **参数验证**: 严格的输入验证和错误处理
+- **Password Protection**: Admin dashboard requires authentication
+- **Per-Configuration Access Control**: Individual passwords for each configuration
+- **Session Management**: Cookie-based session control
+- **Input Validation**: Strict validation and error handling
+- **SQL Injection Protection**: Using SQLx prepared statements
+- **XSS Protection**: Template-based HTML escaping
 
-## 🎯 生成的脚本特性
+## 🎯 Generated Script Features
 
-- **依赖检查**: 自动检查jq工具
-- **备份功能**: 自动备份现有配置
-- **彩色输出**: 友好的命令行界面
-- **错误处理**: 完善的错误提示
-- **跨平台**: 支持macOS/Linux/WSL
+### Environment Variables Method
+- **Shell Detection**: Automatic shell configuration file detection
+- **Backup Creation**: Automatic backup of existing configurations
+- **Clean Installation**: Removes conflicting environment variables
+- **Session Variables**: Sets variables for current session
 
-## 📝 许可证
+### Config File Method
+- **Dependency Checking**: Automatic jq tool verification
+- **Backup Functionality**: Automatic backup of existing settings
+- **JSON Validation**: Ensures valid configuration files
+- **Colored Output**: User-friendly command-line interface
+- **Error Handling**: Comprehensive error messages
+- **Cross-Platform**: Supports macOS/Linux/WSL
+
+## 🌐 Internationalization
+
+The application supports multiple languages:
+
+- **English** (default)
+- **Chinese (Simplified)**
+
+Language preferences are:
+- Stored in localStorage for persistence
+- Applied across all pages including login
+- Synchronized between language selector and page content
+
+## 📝 License
 
 MIT License
 
-## 🤝 贡献
+## 🤝 Contributing
 
-欢迎提交Issue和Pull Request！
+Contributions are welcome! Please feel free to submit Issues and Pull Requests.
+
+### Development Setup
+```bash
+# Clone the repository
+git clone <your-repo-url>
+cd cccm
+
+# Install dependencies and run
+cargo run
+
+# Run tests
+cargo test
+```
+
+## 📊 Changelog
+
+### v1.1.0
+- ✅ Fixed multilingual switching issues
+- ✅ Added language selector to login page
+- ✅ Fixed language selector sync issues
+- ✅ Added environment variable script generation
+- ✅ Enhanced Docker configuration with persistence
+- ✅ Added comprehensive documentation
+
+### v1.0.0
+- 🎉 Initial release
+- ✅ Basic configuration management
+- ✅ Script generation and download
+- ✅ Admin authentication
+- ✅ SQLite database with migrations

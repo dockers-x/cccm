@@ -1,0 +1,63 @@
+version: '3.8'
+
+services:
+  cccm:
+    build: 
+      context: .
+      dockerfile: Dockerfile
+    container_name: cccm-app
+    expose:
+      - "3000"
+    environment:
+      # Admin password for the web interface - CHANGE THIS IN PRODUCTION!
+      - ADMIN_PASSWORD=${ADMIN_PASSWORD:-please-change-this-password}
+      
+      # Database configuration
+      - DATABASE_PATH=/app/data/config.db
+      
+      # Logging level
+      - RUST_LOG=${RUST_LOG:-info}
+      
+      # Timezone
+      - TZ=${TZ:-UTC}
+    volumes:
+      # Persist database data
+      - cccm_data:/app/data
+      
+      # Optional: Mount custom config if needed
+      # - ./config:/app/config:ro
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
+    networks:
+      - cccm_network
+    depends_on:
+      - nginx
+
+  nginx:
+    image: nginx:alpine
+    container_name: cccm-nginx
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx/conf.d:/etc/nginx/conf.d:ro
+      - ./ssl:/etc/nginx/ssl:ro  # Mount SSL certificates if using HTTPS
+    restart: unless-stopped
+    depends_on:
+      - cccm
+    networks:
+      - cccm_network
+
+volumes:
+  cccm_data:
+    driver: local
+
+networks:
+  cccm_network:
+    driver: bridge

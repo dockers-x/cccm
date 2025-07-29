@@ -1,0 +1,54 @@
+version: '3.8'
+
+services:
+  cccm:
+    build: 
+      context: .
+      dockerfile: Dockerfile
+    container_name: cccm-app
+    ports:
+      - "3000:3000"
+    environment:
+      # Admin password for the web interface
+      - ADMIN_PASSWORD=${ADMIN_PASSWORD:-admin123}
+      
+      # Database configuration
+      - DATABASE_PATH=/app/data/config.db
+      
+      # Logging level
+      - RUST_LOG=${RUST_LOG:-info}
+      
+      # Timezone (optional)
+      - TZ=${TZ:-UTC}
+    volumes:
+      # Persist database data
+      - cccm_data:/app/data
+      
+      # Optional: Mount logs directory if you want to persist logs
+      # - ./logs:/app/logs
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.cccm.rule=Host(`cccm.yourdomain.com`)"
+      - "traefik.http.routers.cccm.tls=true"
+      - "traefik.http.routers.cccm.tls.certresolver=letsencrypt"
+      - "traefik.http.services.cccm.loadbalancer.server.port=3000"
+
+volumes:
+  # Named volume for database persistence
+  cccm_data:
+    driver: local
+
+# Optional: Add a reverse proxy like Traefik or Nginx
+# Uncomment the following section if you want to use Traefik
+#
+# networks:
+#   default:
+#     external:
+#       name: traefik

@@ -11,22 +11,31 @@ use serde::Deserialize;
 
 use crate::models::{ConfigRecord, CreateConfigRequest, LoginRequest};
 use crate::auth::verify_password;
+use crate::i18n::I18n;
 
 #[derive(Deserialize)]
 pub struct DownloadQuery {
     password: Option<String>,
+    lang: Option<String>,
+}
+
+#[derive(Deserialize)]
+pub struct LangQuery {
+    lang: Option<String>,
 }
 
 #[derive(Template)]
 #[template(path = "login.html")]
 struct LoginTemplate {
     error: Option<String>,
+    i18n: I18n,
 }
 
 #[derive(Template)]
 #[template(path = "dashboard.html")]
 struct DashboardTemplate {
     configs: Vec<ConfigRecord>,
+    i18n: I18n,
 }
 
 #[derive(Template)]
@@ -35,10 +44,15 @@ struct DownloadPasswordTemplate {
     config_id: String,
     config_name: String,
     error: Option<String>,
+    i18n: I18n,
 }
 
-pub async fn login_page() -> Html<String> {
-    let template = LoginTemplate { error: None };
+pub async fn login_page(Query(query): Query<LangQuery>) -> Html<String> {
+    let mut i18n = I18n::new();
+    if let Some(lang) = query.lang {
+        i18n.set_language(&lang);
+    }
+    let template = LoginTemplate { error: None, i18n };
     Html(template.render().unwrap())
 }
 
@@ -50,14 +64,16 @@ pub async fn login_post(
         let jar = jar.add(("session", "authenticated"));
         Ok((jar, axum::response::Redirect::to("/dashboard")))
     } else {
+        let i18n = I18n::new();
         let template = LoginTemplate { 
-            error: Some("Invalid password".to_string()) 
+            error: Some(i18n.t("invalid_password")),
+            i18n
         };
         Err((jar, Html(template.render().unwrap())))
     }
 }
 
-pub async fn dashboard(State(pool): State<SqlitePool>) -> Result<Html<String>, StatusCode> {
+pub async fn dashboard(State(pool): State<SqlitePool>, Query(query): Query<LangQuery>) -> Result<Html<String>, StatusCode> {
     let configs = sqlx::query_as::<_, ConfigRecord>(
         "SELECT * FROM config_records ORDER BY created_at DESC"
     )
@@ -65,7 +81,12 @@ pub async fn dashboard(State(pool): State<SqlitePool>) -> Result<Html<String>, S
     .await
     .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
     
-    let template = DashboardTemplate { configs };
+    let mut i18n = I18n::new();
+    if let Some(lang) = query.lang {
+        i18n.set_language(&lang);
+    }
+    
+    let template = DashboardTemplate { configs, i18n };
     Ok(Html(template.render().unwrap()))
 }
 
@@ -77,8 +98,8 @@ pub async fn create_config(
     
     sqlx::query(
         r#"
-        INSERT INTO config_records (id, name, anthropic_base_url, anthropic_api_key, anthropic_auth_token, access_password, created_at, updated_at)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+        INSERT INTO config_records (id, name, anthropic_base_url, anthropic_api_key, anthropic_auth_token, access_password, setup_method, created_at, updated_at)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
         "#
     )
     .bind(&config.id)
@@ -87,6 +108,7 @@ pub async fn create_config(
     .bind(&config.anthropic_api_key)
     .bind(&config.anthropic_auth_token)
     .bind(&config.access_password)
+    .bind(&config.setup_method)
     .bind(&config.created_at)
     .bind(&config.updated_at)
     .execute(&pool)
@@ -114,6 +136,12 @@ pub async fn download_script(
     Path(id): Path<String>,
     Query(query): Query<DownloadQuery>,
 ) -> impl IntoResponse {
+    // Set up i18n
+    let mut i18n = I18n::new();
+    if let Some(lang) = &query.lang {
+        i18n.set_language(lang);
+    }
+    
     // Get config from database
     let config = match sqlx::query_as::<_, ConfigRecord>(
         "SELECT * FROM config_records WHERE id = ?"
@@ -132,12 +160,13 @@ pub async fn download_script(
         match &query.password {
             Some(provided_password) => {
                 // Password provided, check if correct
-                if provided_password != required_password {
+                if provided_password.trim() != required_password.trim() {
                     // Wrong password, show password page with error
                     let template = DownloadPasswordTemplate {
                         config_id: id,
                         config_name: config.name,
-                        error: Some("Incorrect password".to_string()),
+                        error: Some(i18n.t("incorrect_password")),
+                        i18n,
                     };
                     return Html(template.render().unwrap()).into_response();
                 }
@@ -149,6 +178,7 @@ pub async fn download_script(
                     config_id: id,
                     config_name: config.name,
                     error: None,
+                    i18n,
                 };
                 return Html(template.render().unwrap()).into_response();
             }
@@ -165,7 +195,99 @@ pub async fn download_script(
     
     let filename = format!("setup_{}.sh", config.name.replace(" ", "_"));
     
-    let script = format!(
+    // Generate script based on setup method
+    let setup_method = config.setup_method.as_deref().unwrap_or("config_file");
+    let script = if setup_method == "env_vars" {
+        generate_env_vars_script(&config, auth_token)
+    } else {
+        generate_config_file_script(&config, auth_token)
+    };
+    
+    let headers = [
+        ("Content-Type", "application/x-sh"),
+        ("Content-Disposition", &format!("attachment; filename=\"{}\"", filename)),
+    ];
+    
+    (headers, script).into_response()
+}
+
+fn generate_env_vars_script(config: &ConfigRecord, auth_token: &str) -> String {
+    // Check if we should use API_KEY or AUTH_TOKEN
+    let auth_var = if config.anthropic_api_key.is_some() {
+        "ANTHROPIC_API_KEY"
+    } else {
+        "ANTHROPIC_AUTH_TOKEN"
+    };
+    
+    let other_auth_var = if auth_var == "ANTHROPIC_API_KEY" {
+        "ANTHROPIC_AUTH_TOKEN"
+    } else {
+        "ANTHROPIC_API_KEY"
+    };
+
+    // Use simple string concatenation to avoid format! macro issues
+    let mut script = String::new();
+    script.push_str("#!/bin/bash\n\n");
+    script.push_str(&format!("# Claude Code Environment Configuration Script for {}\n", config.name));
+    script.push_str("# This script configures Claude Code using environment variables\n\n");
+    script.push_str("set -e\n\n");
+    script.push_str("# Configuration\n");
+    script.push_str(&format!("BASE_URL=\"{}\"\n", config.anthropic_base_url));
+    script.push_str(&format!("AUTH_TOKEN=\"{}\"\n", auth_token));
+    script.push_str(&format!("AUTH_VAR=\"{}\"\n", auth_var));
+    script.push_str(&format!("OTHER_AUTH_VAR=\"{}\"\n\n", other_auth_var));
+    
+    script.push_str("# Main configuration function\n");
+    script.push_str("main() {\n");
+    script.push_str(&format!("    echo \"Claude Code Environment Configuration for {}\"\n", config.name));
+    script.push_str("    echo \"=====================================================\"\n\n");
+    
+    script.push_str("    # Set environment variables for current session\n");
+    script.push_str("    export ANTHROPIC_BASE_URL=\"$BASE_URL\"\n");
+    script.push_str("    export $AUTH_VAR=\"$AUTH_TOKEN\"\n");
+    script.push_str("    unset $OTHER_AUTH_VAR\n\n");
+    
+    script.push_str("    # Detect shell config file\n");
+    script.push_str("    if [ -n \"$ZSH_VERSION\" ]; then\n");
+    script.push_str("        CONFIG_FILE=\"$HOME/.zshrc\"\n");
+    script.push_str("    elif [ -n \"$BASH_VERSION\" ]; then\n");
+    script.push_str("        CONFIG_FILE=\"$HOME/.bashrc\"\n");
+    script.push_str("    else\n");
+    script.push_str("        CONFIG_FILE=\"$HOME/.profile\"\n");
+    script.push_str("    fi\n\n");
+    
+    script.push_str("    # Backup existing config\n");
+    script.push_str("    if [ -f \"$CONFIG_FILE\" ]; then\n");
+    script.push_str("        cp \"$CONFIG_FILE\" \"$CONFIG_FILE.backup.$(date +%Y%m%d_%H%M%S)\"\n");
+    script.push_str("    fi\n\n");
+    
+    script.push_str("    # Remove existing Claude Code config\n");
+    script.push_str("    if [ -f \"$CONFIG_FILE\" ]; then\n");
+    script.push_str("        sed -i.tmp '/ANTHROPIC_/d' \"$CONFIG_FILE\" 2>/dev/null || true\n");
+    script.push_str("        sed -i.tmp '/Claude Code Configuration/d' \"$CONFIG_FILE\" 2>/dev/null || true\n");
+    script.push_str("        rm -f \"$CONFIG_FILE.tmp\"\n");
+    script.push_str("    fi\n\n");
+    
+    script.push_str("    # Add new configuration\n");
+    script.push_str("    echo \"\" >> \"$CONFIG_FILE\"\n");
+    script.push_str("    echo \"# Claude Code Configuration - $(date)\" >> \"$CONFIG_FILE\"\n");
+    script.push_str("    echo \"export ANTHROPIC_BASE_URL=\\\"$BASE_URL\\\"\" >> \"$CONFIG_FILE\"\n");
+    script.push_str("    echo \"export $AUTH_VAR=\\\"$AUTH_TOKEN\\\"\" >> \"$CONFIG_FILE\"\n");
+    script.push_str("    echo \"unset $OTHER_AUTH_VAR\" >> \"$CONFIG_FILE\"\n");
+    script.push_str("    echo \"\" >> \"$CONFIG_FILE\"\n\n");
+    
+    script.push_str("    echo \"Claude Code configured successfully!\"\n");
+    script.push_str("    echo \"Environment variables added to: $CONFIG_FILE\"\n");
+    script.push_str("    echo \"Restart your terminal or run: source $CONFIG_FILE\"\n");
+    script.push_str("}\n\n");
+    
+    script.push_str("main \"$@\"\n");
+    
+    script
+}
+
+fn generate_config_file_script(config: &ConfigRecord, auth_token: &str) -> String {
+    format!(
         r#"#!/bin/bash
 
 # Claude Code Configuration Script for {}
@@ -329,14 +451,7 @@ main() {{
 main "$@"
 "#,
         config.name, config.anthropic_base_url, auth_token, config.name
-    );
-    
-    let headers = [
-        ("Content-Type", "application/x-sh"),
-        ("Content-Disposition", &format!("attachment; filename=\"{}\"", filename)),
-    ];
-    
-    (headers, script).into_response()
+    )
 }
 
 pub async fn get_config_password(

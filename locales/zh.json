@@ -40,6 +40,10 @@
     "delete_confirm": "确定要删除这个配置吗？",
     "error_creating_configuration": "创建配置时出错",
     "error_deleting_configuration": "删除配置时出错",
-    "provide_auth_method": "请提供 API Key 或 Auth Token"
+    "provide_auth_method": "请提供 API Key 或 Auth Token",
+    "setup_method": "设置方式",
+    "setup_method_description": "选择脚本配置 Claude Code 的方式",
+    "use_config_file": "使用配置文件 (settings.json)",
+    "use_environment_variables": "使用环境变量"
   }
 }
