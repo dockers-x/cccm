@@ -150,7 +150,7 @@ jobs:
         uses: docker/metadata-action@v5
         with:
           images: |
-            ${{ secrets.DOCKER_USERNAME }}/cccm
+            ${{ secrets.DOCKERHUB_USERNAME }}/cccm
             ghcr.io/${{ github.repository }}
           tags: |
             type=ref,event=tag
