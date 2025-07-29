@@ -1,9 +1,8 @@
 name: Release
-
 on:
   push:
     tags:
-      - "v*"
+      - "*"
   workflow_dispatch:
 
 permissions:
@@ -55,33 +54,25 @@ jobs:
             exe: cccm
             cross: false
 
-          - os: macos-latest
-            target: aarch64-apple-darwin
-            exe: cccm
-            cross: false
-
     steps:
       - uses: actions/checkout@v4
-      
-      - uses: actions-rs/toolchain@v1
+      - uses: dtolnay/rust-toolchain@stable
         with:
-          profile: minimal
-          toolchain: 1.75.0
-          default: true
+          # Since rust 1.72, some platforms are tier 3
+          toolchain: stable
+          targets: ${{ matrix.target }}
 
-      - name: Install OpenSSL (Ubuntu)
+      - name: Install OpenSSL
         if: matrix.os == 'ubuntu-latest'
-        run: sudo apt-get update && sudo apt-get install pkg-config libssl-dev
-
-      - name: Install OpenSSL (macOS)
+        run: sudo apt-get install pkg-config libssl-dev
+      - name: Install OpenSSL
         if: matrix.os == 'macos-latest'
         run: brew install openssl@3
-      
-      # Native build
-      - name: Install target
-        if: matrix.cross == false
-        run: rustup target add ${{ matrix.target }}
 
+      # Native build
+      - name: Run tests
+        if: matrix.cross == false
+        run: cargo test --release --target ${{ matrix.target }} --verbose
       - name: Build release
         if: matrix.cross == false
         run: cargo build --release --target ${{ matrix.target }}
@@ -90,86 +81,85 @@ jobs:
       - name: Install cross
         if: matrix.cross
         run: cargo install --version 0.2.5 cross
-
-      - name: Build release (cross)
+      - name: Run tests
         if: matrix.cross
-        run: cross build --release --target ${{ matrix.target }}
+        run: cross test --release --target ${{ matrix.target }} --verbose  --no-default-features
+      - name: Build release
+        if: matrix.cross
+        run: cross build --release --target ${{ matrix.target }}  --no-default-features
 
       - name: Run UPX
-        # UPX may not support some platforms. Ignore the errors
+        # Upx may not support some platforms. Ignore the errors
         continue-on-error: true
-        # Disable UPX for Windows and some ARM targets that may have issues
-        if: matrix.os == 'ubuntu-latest' && !contains(matrix.target, 'windows') && !contains(matrix.target, 'arm')
+        # Disable upx for mips. See https://github.com/upx/upx/issues/387
+        if: matrix.os == 'ubuntu-latest' && !contains(matrix.target, 'mips')
         uses: crazy-max/ghaction-upx@v3
         with:
-          version: v4.2.2
+          version: v4.0.2
           files: target/${{ matrix.target }}/release/${{ matrix.exe }}
           args: -q --best --lzma
 
-      - name: Upload artifacts
-        uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v4
         with:
           name: cccm-${{ matrix.target }}
           path: target/${{ matrix.target }}/release/${{ matrix.exe }}
 
-      - name: Create release archive
-        shell: bash
-        run: |
-          cd target/${{ matrix.target }}/release/
-          if [[ "${{ matrix.os }}" == "windows-latest" ]]; then
-            7z a ../../../cccm-${{ matrix.target }}.zip ${{ matrix.exe }}
-          else
-            tar czf ../../../cccm-${{ matrix.target }}.tar.gz ${{ matrix.exe }}
-          fi
+      - name: Zip Release
+        uses: TheDoctor0/zip-release@0.7.6
+        with:
+          type: zip
+          filename: cccm-${{ matrix.target }}.zip
+          directory: target/${{ matrix.target }}/release/
+          path: ${{ matrix.exe }}
 
-      - name: Publish Release
+      - name: Publish
         uses: softprops/action-gh-release@v1
         if: startsWith(github.ref, 'refs/tags/')
         with:
-          files: |
-            cccm-${{ matrix.target }}.*
+          files: target/${{ matrix.target }}/release/cccm-${{ matrix.target }}.zip
           generate_release_notes: true
-          draft: false
+          draft: true
+          token: ${{ secrets.GITHUB_TOKEN }}
 
   docker:
+    name: Build and push Docker image
     runs-on: ubuntu-latest
     needs: release
     if: startsWith(github.ref, 'refs/tags/')
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Set up QEMU
-        uses: docker/setup-qemu-action@v3
-
+      - uses: actions/checkout@v4
+      
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
-
-      - name: Login to Docker Hub
+      
+      - name: Log in to Docker Hub
         uses: docker/login-action@v3
         with:
-          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
-
-      - name: Login to GitHub Container Registry
+      
+      - name: Log in to GitHub Container Registry
         uses: docker/login-action@v3
         with:
           registry: ghcr.io
-          username: ${{ github.repository_owner }}
+          username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
-
+      
       - name: Extract metadata
         id: meta
         uses: docker/metadata-action@v5
         with:
           images: |
-            ${{ secrets.DOCKERHUB_USERNAME }}/claude-code-config-manager
-            ghcr.io/${{ github.repository_owner }}/claude-code-config-manager
+            ${{ secrets.DOCKER_USERNAME }}/cccm
+            ghcr.io/${{ github.repository }}
           tags: |
             type=ref,event=tag
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+            type=semver,pattern={{major}}
             type=raw,value=latest,enable={{is_default_branch}}
-
-      - name: Build and push
+      
+      - name: Build and push Docker image
         uses: docker/build-push-action@v5
         with:
           context: .
