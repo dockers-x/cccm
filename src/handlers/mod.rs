@@ -98,8 +98,8 @@ pub async fn create_config(
     
     sqlx::query(
         r#"
-        INSERT INTO config_records (id, name, anthropic_base_url, anthropic_api_key, anthropic_auth_token, access_password, setup_method, created_at, updated_at)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+        INSERT INTO config_records (id, name, anthropic_base_url, anthropic_api_key, anthropic_auth_token, access_password, setup_method, anthropic_model, anthropic_small_fast_model, anthropic_small_fast_model_aws_region, created_at, updated_at)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         "#
     )
     .bind(&config.id)
@@ -109,6 +109,9 @@ pub async fn create_config(
     .bind(&config.anthropic_auth_token)
     .bind(&config.access_password)
     .bind(&config.setup_method)
+    .bind(&config.anthropic_model)
+    .bind(&config.anthropic_small_fast_model)
+    .bind(&config.anthropic_small_fast_model_aws_region)
     .bind(&config.created_at)
     .bind(&config.updated_at)
     .execute(&pool)
@@ -195,10 +198,17 @@ pub async fn download_script(
     
     let filename = format!("setup_{}.sh", config.name.replace(" ", "_"));
     
-    // Generate script based on setup method
+    // Generate script based on setup method and platform
     let setup_method = config.setup_method.as_deref().unwrap_or("config_file");
+    let user_agent = "Unknown"; // In a real implementation, you'd get this from headers
+    let is_windows = user_agent.contains("Windows") || query.lang.as_deref() == Some("windows");
+    
     let script = if setup_method == "env_vars" {
-        generate_env_vars_script(&config, auth_token)
+        if is_windows {
+            generate_windows_env_vars_script(&config, auth_token)
+        } else {
+            generate_env_vars_script(&config, auth_token)
+        }
     } else {
         generate_config_file_script(&config, auth_token)
     };
@@ -237,6 +247,18 @@ fn generate_env_vars_script(config: &ConfigRecord, auth_token: &str) -> String {
     script.push_str(&format!("AUTH_VAR=\"{}\"\n", auth_var));
     script.push_str(&format!("OTHER_AUTH_VAR=\"{}\"\n\n", other_auth_var));
     
+    // Add optional model configuration
+    if let Some(model) = &config.anthropic_model {
+        script.push_str(&format!("MODEL=\"{}\"\n", model));
+    }
+    if let Some(small_model) = &config.anthropic_small_fast_model {
+        script.push_str(&format!("SMALL_FAST_MODEL=\"{}\"\n", small_model));
+    }
+    if let Some(aws_region) = &config.anthropic_small_fast_model_aws_region {
+        script.push_str(&format!("SMALL_FAST_MODEL_AWS_REGION=\"{}\"\n", aws_region));
+    }
+    script.push_str("\n");
+    
     script.push_str("# Main configuration function\n");
     script.push_str("main() {\n");
     script.push_str(&format!("    echo \"Claude Code Environment Configuration for {}\"\n", config.name));
@@ -245,7 +267,25 @@ fn generate_env_vars_script(config: &ConfigRecord, auth_token: &str) -> String {
     script.push_str("    # Set environment variables for current session\n");
     script.push_str("    export ANTHROPIC_BASE_URL=\"$BASE_URL\"\n");
     script.push_str("    export $AUTH_VAR=\"$AUTH_TOKEN\"\n");
-    script.push_str("    unset $OTHER_AUTH_VAR\n\n");
+    script.push_str("    unset $OTHER_AUTH_VAR\n");
+    
+    // Export optional model variables if set, otherwise unset them
+    if config.anthropic_model.is_some() {
+        script.push_str("    [ -n \"$MODEL\" ] && export ANTHROPIC_MODEL=\"$MODEL\"\n");
+    } else {
+        script.push_str("    unset ANTHROPIC_MODEL\n");
+    }
+    if config.anthropic_small_fast_model.is_some() {
+        script.push_str("    [ -n \"$SMALL_FAST_MODEL\" ] && export ANTHROPIC_SMALL_FAST_MODEL=\"$SMALL_FAST_MODEL\"\n");
+    } else {
+        script.push_str("    unset ANTHROPIC_SMALL_FAST_MODEL\n");
+    }
+    if config.anthropic_small_fast_model_aws_region.is_some() {
+        script.push_str("    [ -n \"$SMALL_FAST_MODEL_AWS_REGION\" ] && export ANTHROPIC_SMALL_FAST_MODEL_AWS_REGION=\"$SMALL_FAST_MODEL_AWS_REGION\"\n");
+    } else {
+        script.push_str("    unset ANTHROPIC_SMALL_FAST_MODEL_AWS_REGION\n");
+    }
+    script.push_str("\n");
     
     script.push_str("    # Detect shell config file\n");
     script.push_str("    if [ -n \"$ZSH_VERSION\" ]; then\n");
@@ -274,6 +314,23 @@ fn generate_env_vars_script(config: &ConfigRecord, auth_token: &str) -> String {
     script.push_str("    echo \"export ANTHROPIC_BASE_URL=\\\"$BASE_URL\\\"\" >> \"$CONFIG_FILE\"\n");
     script.push_str("    echo \"export $AUTH_VAR=\\\"$AUTH_TOKEN\\\"\" >> \"$CONFIG_FILE\"\n");
     script.push_str("    echo \"unset $OTHER_AUTH_VAR\" >> \"$CONFIG_FILE\"\n");
+    
+    // Add optional model variables to shell config with proper unset handling
+    if config.anthropic_model.is_some() {
+        script.push_str("    echo \"[ -n \\\"$MODEL\\\" ] && export ANTHROPIC_MODEL=\\\"$MODEL\\\"\" >> \"$CONFIG_FILE\"\n");
+    } else {
+        script.push_str("    echo \"unset ANTHROPIC_MODEL\" >> \"$CONFIG_FILE\"\n");
+    }
+    if config.anthropic_small_fast_model.is_some() {
+        script.push_str("    echo \"[ -n \\\"$SMALL_FAST_MODEL\\\" ] && export ANTHROPIC_SMALL_FAST_MODEL=\\\"$SMALL_FAST_MODEL\\\"\" >> \"$CONFIG_FILE\"\n");
+    } else {
+        script.push_str("    echo \"unset ANTHROPIC_SMALL_FAST_MODEL\" >> \"$CONFIG_FILE\"\n");
+    }
+    if config.anthropic_small_fast_model_aws_region.is_some() {
+        script.push_str("    echo \"[ -n \\\"$SMALL_FAST_MODEL_AWS_REGION\\\" ] && export ANTHROPIC_SMALL_FAST_MODEL_AWS_REGION=\\\"$SMALL_FAST_MODEL_AWS_REGION\\\"\" >> \"$CONFIG_FILE\"\n");
+    } else {
+        script.push_str("    echo \"unset ANTHROPIC_SMALL_FAST_MODEL_AWS_REGION\" >> \"$CONFIG_FILE\"\n");
+    }
     script.push_str("    echo \"\" >> \"$CONFIG_FILE\"\n\n");
     
     script.push_str("    echo \"Claude Code configured successfully!\"\n");
@@ -287,6 +344,19 @@ fn generate_env_vars_script(config: &ConfigRecord, auth_token: &str) -> String {
 }
 
 fn generate_config_file_script(config: &ConfigRecord, auth_token: &str) -> String {
+    let mut env_vars = String::new();
+    
+    // Add optional environment variables
+    if let Some(model) = &config.anthropic_model {
+        env_vars.push_str(&format!("    \"ANTHROPIC_MODEL\": \"{}\",\n", model));
+    }
+    if let Some(small_model) = &config.anthropic_small_fast_model {
+        env_vars.push_str(&format!("    \"ANTHROPIC_SMALL_FAST_MODEL\": \"{}\",\n", small_model));
+    }
+    if let Some(aws_region) = &config.anthropic_small_fast_model_aws_region {
+        env_vars.push_str(&format!("    \"ANTHROPIC_SMALL_FAST_MODEL_AWS_REGION\": \"{}\",\n", aws_region));
+    }
+    
     format!(
         r#"#!/bin/bash
 
@@ -368,7 +438,7 @@ create_settings() {{
     "DISABLE_ERROR_REPORTING": 1,
     "CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC": 1,
     "CLAUDE_BASH_MAINTAIN_PROJECT_WORKING_DIR": 1,
-    "MAX_THINKING_TOKENS": 12000
+    "MAX_THINKING_TOKENS": 12000{}
   }},
   "permissions": {{
     "allow": [
@@ -450,7 +520,130 @@ main() {{
 # Run main function
 main "$@"
 "#,
-        config.name, config.anthropic_base_url, auth_token, config.name
+        config.name, config.anthropic_base_url, auth_token, env_vars, config.name
+    )
+}
+
+fn generate_windows_env_vars_script(config: &ConfigRecord, auth_token: &str) -> String {
+    // Check if we should use API_KEY or AUTH_TOKEN
+    let auth_var = if config.anthropic_api_key.is_some() {
+        "ANTHROPIC_API_KEY"
+    } else {
+        "ANTHROPIC_AUTH_TOKEN"
+    };
+    
+    let other_auth_var = if auth_var == "ANTHROPIC_API_KEY" {
+        "ANTHROPIC_AUTH_TOKEN"
+    } else {
+        "ANTHROPIC_API_KEY"
+    };
+
+    // Build optional model configuration
+    let mut model_config = String::new();
+    let mut session_vars = String::new();
+    let mut persistent_vars = String::new();
+    
+    if let Some(model) = &config.anthropic_model {
+        model_config.push_str(&format!("$Model = \"{}\"\n", model));
+        session_vars.push_str("    [Environment]::SetEnvironmentVariable('ANTHROPIC_MODEL', $Model)\n");
+        persistent_vars.push_str("    [Environment]::SetEnvironmentVariable('ANTHROPIC_MODEL', $Model, 'User')\n");
+    } else {
+        session_vars.push_str("    [Environment]::SetEnvironmentVariable('ANTHROPIC_MODEL', [NullString]::Value, 'User')\n");
+        persistent_vars.push_str("    [Environment]::SetEnvironmentVariable('ANTHROPIC_MODEL', [NullString]::Value, 'User')\n");
+    }
+    
+    if let Some(small_model) = &config.anthropic_small_fast_model {
+        model_config.push_str(&format!("$SmallFastModel = \"{}\"\n", small_model));
+        session_vars.push_str("    [Environment]::SetEnvironmentVariable('ANTHROPIC_SMALL_FAST_MODEL', $SmallFastModel)\n");
+        persistent_vars.push_str("    [Environment]::SetEnvironmentVariable('ANTHROPIC_SMALL_FAST_MODEL', $SmallFastModel, 'User')\n");
+    } else {
+        session_vars.push_str("    [Environment]::SetEnvironmentVariable('ANTHROPIC_SMALL_FAST_MODEL', [NullString]::Value, 'User')\n");
+        persistent_vars.push_str("    [Environment]::SetEnvironmentVariable('ANTHROPIC_SMALL_FAST_MODEL', [NullString]::Value, 'User')\n");
+    }
+    
+    if let Some(aws_region) = &config.anthropic_small_fast_model_aws_region {
+        model_config.push_str(&format!("$SmallFastModelAwsRegion = \"{}\"\n", aws_region));
+        session_vars.push_str("    [Environment]::SetEnvironmentVariable('ANTHROPIC_SMALL_FAST_MODEL_AWS_REGION', $SmallFastModelAwsRegion)\n");
+        persistent_vars.push_str("    [Environment]::SetEnvironmentVariable('ANTHROPIC_SMALL_FAST_MODEL_AWS_REGION', $SmallFastModelAwsRegion, 'User')\n");
+    } else {
+        session_vars.push_str("    [Environment]::SetEnvironmentVariable('ANTHROPIC_SMALL_FAST_MODEL_AWS_REGION', [NullString]::Value, 'User')\n");
+        persistent_vars.push_str("    [Environment]::SetEnvironmentVariable('ANTHROPIC_SMALL_FAST_MODEL_AWS_REGION', [NullString]::Value, 'User')\n");
+    }
+
+    format!(
+        r#"# Claude Code Environment Configuration Script for {}
+# This PowerShell script configures Claude Code using environment variables
+
+param(
+    [string]$Action = "Both"
+)
+
+# Configuration
+$BaseUrl = "{}"
+$AuthToken = "{}"
+$AuthVar = "{}"
+$OtherAuthVar = "{}"
+{}
+# Function to write colored output
+function Write-ColorOutput($ForegroundColor) {{
+    $fc = $host.UI.RawUI.ForegroundColor
+    $host.UI.RawUI.ForegroundColor = $ForegroundColor
+    if ($args) {{
+        Write-Output $args
+    }}
+    $host.UI.RawUI.ForegroundColor = $fc
+}}
+
+function Write-Info($message) {{
+    Write-ColorOutput Cyan "[INFO] $message"
+}}
+
+function Write-Success($message) {{
+    Write-ColorOutput Green "[SUCCESS] $message"
+}}
+
+function Write-Warning($message) {{
+    Write-ColorOutput Yellow "[WARNING] $message"
+}}
+
+function Write-Error($message) {{
+    Write-ColorOutput Red "[ERROR] $message"
+}}
+
+# Main configuration function
+function main {{
+    Write-Info "Claude Code Environment Configuration for {}"
+    Write-Info "====================================================="
+    Write-Info ""
+    
+    if ($Action -eq "Session" -or $Action -eq "Both") {{
+        Write-Info "Setting environment variables for current session..."
+        [Environment]::SetEnvironmentVariable('ANTHROPIC_BASE_URL', $BaseUrl)
+        [Environment]::SetEnvironmentVariable($AuthVar, $AuthToken)
+        [Environment]::SetEnvironmentVariable($OtherAuthVar, [NullString]::Value)
+{}
+        
+        Write-Success "Environment variables set for current session"
+    }}
+    
+    if ($Action -eq "Persistent" -or $Action -eq "Both") {{
+        Write-Info "Setting persistent environment variables..."
+        [Environment]::SetEnvironmentVariable('ANTHROPIC_BASE_URL', $BaseUrl, 'User')
+        [Environment]::SetEnvironmentVariable($AuthVar, $AuthToken, 'User')
+        [Environment]::SetEnvironmentVariable($OtherAuthVar, [NullString]::Value, 'User')
+{}
+        
+        Write-Success "Persistent environment variables configured"
+        Write-Info "Restart PowerShell or open a new terminal for changes to take effect"
+    }}
+    
+    Write-Success "Claude Code configured successfully!"
+}}
+
+# Run main function
+main @args
+"#,
+        config.name, config.anthropic_base_url, auth_token, auth_var, other_auth_var, model_config, session_vars, persistent_vars, config.name
     )
 }
 

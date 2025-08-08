@@ -44,6 +44,18 @@
     "setup_method": "Setup Method",
     "setup_method_description": "Choose how the script should configure Claude Code",
     "use_config_file": "Use config file (settings.json)",
-    "use_environment_variables": "Use environment variables"
+    "use_environment_variables": "Use environment variables",
+    "anthropic_model": "Custom Model Name (Optional)",
+    "anthropic_model_description": "Custom model name to use (see model configuration)",
+    "anthropic_small_fast_model": "Haiku-like Model for Background Tasks (Optional)",
+    "anthropic_small_fast_model_description": "Haiku-like model name for background tasks",
+    "anthropic_small_fast_model_aws_region": "Override AWS Region for Small/Fast Model (Optional)",
+    "anthropic_small_fast_model_aws_region_description": "Override AWS region when using Bedrock for small/fast model",
+    "manual_config_title": "Manual Environment Variable Configuration",
+    "manual_config_description": "You can also configure these environment variables manually:",
+    "macos_linux_wsl": "macOS / Windows WSL / Linux",
+    "windows_native": "Windows Native",
+    "your_key": "your_key",
+    "your_token": "your_token"
   }
 }

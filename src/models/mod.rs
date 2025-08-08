@@ -12,6 +12,9 @@ pub struct ConfigRecord {
     pub anthropic_auth_token: Option<String>,
     pub access_password: Option<String>,
     pub setup_method: Option<String>, // "config_file" or "env_vars"
+    pub anthropic_model: Option<String>,
+    pub anthropic_small_fast_model: Option<String>,
+    pub anthropic_small_fast_model_aws_region: Option<String>,
     pub created_at: DateTime<Utc>,
     pub updated_at: DateTime<Utc>,
 }
@@ -24,6 +27,9 @@ pub struct CreateConfigRequest {
     pub anthropic_auth_token: Option<String>,
     pub access_password: Option<String>,
     pub setup_method: Option<String>,
+    pub anthropic_model: Option<String>,
+    pub anthropic_small_fast_model: Option<String>,
+    pub anthropic_small_fast_model_aws_region: Option<String>,
 }
 
 #[derive(Debug, Deserialize)]
@@ -51,6 +57,9 @@ impl ConfigRecord {
             anthropic_auth_token: req.anthropic_auth_token,
             access_password: req.access_password,
             setup_method: req.setup_method,
+            anthropic_model: req.anthropic_model,
+            anthropic_small_fast_model: req.anthropic_small_fast_model,
+            anthropic_small_fast_model_aws_region: req.anthropic_small_fast_model_aws_region,
             created_at: now,
             updated_at: now,
         }

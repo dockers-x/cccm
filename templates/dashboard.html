@@ -6,51 +6,188 @@
     <title>{{ i18n.t("app_title") }} - {{ i18n.t("dashboard") }}</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.min.css">
     <style>
+        /* Claude Design System Font Families */
+        @font-face {
+            font-family: jetbrains;
+            src: url('https://cdn.jsdelivr.net/gh/JetBrains/JetBrainsMono/web/woff2/JetBrainsMono-Regular.woff2') format('woff2');
+            font-display: swap;
+            font-weight: 400;
+            font-style: normal
+        }
+
+        @font-face {
+            font-family: jetbrains_fallback;
+            src: local('Arial');
+            ascent-override:77.57%;
+            descent-override:22.82%;
+            line-gap-override:0.00%;
+            size-adjust:131.49%
+        }
+
+        @font-face {
+            font-family: 'Tiempos Text';
+            src: url('https://fonts.cdnfonts.com/css/tiempos-text');
+            font-display: swap;
+            font-weight: 400;
+            font-style: normal
+        }
+
+        @font-face {
+            font-family: 'Styrene B';
+            src: url('https://fonts.cdnfonts.com/css/styrene-b');
+            font-display: swap;
+            font-weight: 400;
+            font-style: normal
+        }
+
         :root {
-            --primary-color: #ff6b35;
-            --secondary-color: #f7931e;
-            --success-color: #2ecc71;
-            --danger-color: #e74c3c;
+            /* Claude Design System Variables */
+            --always-white: 0 0% 100%;
+            --always-black: 0 0% 0%;
+            --font-fallback-serif: Georgia,"Times New Roman",Times,serif;
+            --font-fallback-sans: system-ui,"Segoe UI",Roboto,Helvetica,Arial,sans-serif,"Apple Color Emoji","Segoe UI Emoji","Segoe UI Symbol";
+            --font-fallback-monospace: Menlo,Monaco,monospace,monospace;
+            --font-mono: jetbrains,jetbrains_fallback,var(--font-fallback-monospace);
+            --font-ui: var(--font-styrene-b),var(--font-fallback-sans);
+            --font-ui-serif: var(--font-copernicus),var(--font-fallback-serif);
+            --font-claude-response: var(--font-tiempos),var(--font-fallback-serif);
         }
-        
-        [data-theme="light"] {
-            --bg-gradient-start: #f5f7fa;
-            --bg-gradient-end: #c3cfe2;
-            --header-bg: rgba(255, 255, 255, 0.9);
-            --card-bg: white;
-            --text-color: #333;
-            --border-color: #e1e8ed;
-            --input-bg: white;
-            --config-url-bg: #f8f9fa;
-            --container-shadow: rgba(0, 0, 0, 0.1);
+
+        [data-theme=claude],[data-theme=claude][data-mode=light] {
+            --accent-brand: 15 63.1% 59.6%;
+            --accent-main-000: 15 55.6% 52.4%;
+            --accent-main-100: 15 55.6% 52.4%;
+            --accent-main-200: 15 63.1% 59.6%;
+            --accent-main-900: 0 0% 0%;
+            --accent-pro-000: 251 34.2% 33.3%;
+            --accent-pro-100: 251 40% 45.1%;
+            --accent-pro-200: 251 61% 72.2%;
+            --accent-pro-900: 253 33.3% 91.8%;
+            --accent-secondary-000: 210 73.7% 40.2%;
+            --accent-secondary-100: 210 70.9% 51.6%;
+            --accent-secondary-200: 210 70.9% 51.6%;
+            --accent-secondary-900: 211 72% 90%;
+            --bg-000: 0 0% 100%;
+            --bg-100: 48 33.3% 97.1%;
+            --bg-200: 53 28.6% 94.5%;
+            --bg-300: 48 25% 92.2%;
+            --bg-400: 50 20.7% 88.6%;
+            --bg-500: 50 20.7% 88.6%;
+            --border-100: 30 3.3% 11.8%;
+            --border-200: 30 3.3% 11.8%;
+            --border-300: 30 3.3% 11.8%;
+            --border-400: 30 3.3% 11.8%;
+            --danger-000: 0 61.4% 22.4%;
+            --danger-100: 0 58.6% 34.1%;
+            --danger-200: 0 58.6% 34.1%;
+            --danger-900: 0 50% 95%;
+            --oncolor-100: 0 0% 100%;
+            --oncolor-200: 60 6.7% 97.1%;
+            --oncolor-300: 60 6.7% 97.1%;
+            --text-000: 60 2.6% 7.6%;
+            --text-100: 60 2.6% 7.6%;
+            --text-200: 60 2.5% 23.3%;
+            --text-300: 60 2.5% 23.3%;
+            --text-400: 51 3.1% 43.7%;
+            --text-500: 51 3.1% 43.7%
         }
-        
-        [data-theme="dark"] {
-            --bg-gradient-start: #1a202c;
-            --bg-gradient-end: #2d3748;
-            --header-bg: rgba(45, 55, 72, 0.9);
-            --card-bg: #2d3748;
-            --text-color: #e2e8f0;
-            --border-color: #4a5568;
-            --input-bg: #4a5568;
-            --config-url-bg: #4a5568;
-            --container-shadow: rgba(0, 0, 0, 0.3);
+
+        [data-theme=claude][data-mode=dark] {
+            --accent-brand: 15 63.1% 59.6%;
+            --accent-main-000: 15 55.6% 52.4%;
+            --accent-main-100: 15 63.1% 59.6%;
+            --accent-main-200: 15 63.1% 59.6%;
+            --accent-main-900: 0 0% 0%;
+            --accent-pro-000: 251 84.6% 74.5%;
+            --accent-pro-100: 251 40.2% 54.1%;
+            --accent-pro-200: 251 40% 45.1%;
+            --accent-pro-900: 250 25.3% 19.4%;
+            --accent-secondary-000: 210 71.1% 62%;
+            --accent-secondary-100: 210 70.9% 51.6%;
+            --accent-secondary-200: 210 70.9% 51.6%;
+            --accent-secondary-900: 210 55.9% 24.6%;
+            --bg-000: 60 2.1% 18.4%;
+            --bg-100: 60 2.7% 14.5%;
+            --bg-200: 30 3.3% 11.8%;
+            --bg-300: 60 2.6% 7.6%;
+            --bg-400: 60 3.4% 5.7%;
+            --bg-500: 60 3.4% 5.7%;
+            --border-100: 51 16.5% 84.5%;
+            --border-200: 51 16.5% 84.5%;
+            --border-300: 51 16.5% 84.5%;
+            --border-400: 51 16.5% 84.5%;
+            --danger-000: 0 73.1% 66.5%;
+            --danger-100: 0 58.6% 34.1%;
+            --danger-200: 0 58.6% 34.1%;
+            --danger-900: 0 23% 15.6%;
+            --oncolor-100: 0 0% 100%;
+            --oncolor-200: 60 6.7% 97.1%;
+            --oncolor-300: 60 6.7% 97.1%;
+            --text-000: 48 33.3% 97.1%;
+            --text-100: 48 33.3% 97.1%;
+            --text-200: 50 9% 73.7%;
+            --text-300: 50 9% 73.7%;
+            --text-400: 48 4.8% 59.2%;
+            --text-500: 48 4.8% 59.2%
+        }
+
+        @media (prefers-color-scheme: dark) {
+            [data-theme=claude] {
+                --accent-brand:15 63.1% 59.6%;
+                --accent-main-000: 15 55.6% 52.4%;
+                --accent-main-100: 15 63.1% 59.6%;
+                --accent-main-200: 15 63.1% 59.6%;
+                --accent-main-900: 0 0% 0%;
+                --accent-pro-000: 251 84.6% 74.5%;
+                --accent-pro-100: 251 40.2% 54.1%;
+                --accent-pro-200: 251 40% 45.1%;
+                --accent-pro-900: 250 25.3% 19.4%;
+                --accent-secondary-000: 210 71.1% 62%;
+                --accent-secondary-100: 210 70.9% 51.6%;
+                --accent-secondary-200: 210 70.9% 51.6%;
+                --accent-secondary-900: 210 55.9% 24.6%;
+                --bg-000: 60 2.1% 18.4%;
+                --bg-100: 60 2.7% 14.5%;
+                --bg-200: 30 3.3% 11.8%;
+                --bg-300: 60 2.6% 7.6%;
+                --bg-400: 60 3.4% 5.7%;
+                --bg-500: 60 3.4% 5.7%;
+                --border-100: 51 16.5% 84.5%;
+                --border-200: 51 16.5% 84.5%;
+                --border-300: 51 16.5% 84.5%;
+                --border-400: 51 16.5% 84.5%;
+                --danger-000: 0 73.1% 66.5%;
+                --danger-100: 0 58.6% 34.1%;
+                --danger-200: 0 58.6% 34.1%;
+                --danger-900: 0 23% 15.6%;
+                --oncolor-100: 0 0% 100%;
+                --oncolor-200: 60 6.7% 97.1%;
+                --oncolor-300: 60 6.7% 97.1%;
+                --text-000: 48 33.3% 97.1%;
+                --text-100: 48 33.3% 97.1%;
+                --text-200: 50 9% 73.7%;
+                --text-300: 50 9% 73.7%;
+                --text-400: 48 4.8% 59.2%;
+                --text-500: 48 4.8% 59.2%
+            }
         }
         
         body {
-            background: linear-gradient(135deg, var(--bg-gradient-start) 0%, var(--bg-gradient-end) 100%);
+            background: hsl(var(--bg-000));
             min-height: 100vh;
-            color: var(--text-color);
+            color: hsl(var(--text-000));
+            font-family: var(--font-ui);
             transition: all 0.3s ease;
         }
         
         .header {
-            background: var(--header-bg);
+            background: hsl(var(--bg-100));
             backdrop-filter: blur(10px);
             padding: 1rem 0;
             margin-bottom: 2rem;
-            box-shadow: 0 4px 6px var(--container-shadow);
+            box-shadow: 0 4px 6px hsl(var(--bg-300) / 0.1);
             animation: slideDown 0.6s ease-out;
+            border-bottom: 1px solid hsl(var(--bg-200));
         }
         
         .theme-toggle {
@@ -64,14 +201,14 @@
         }
         
         .theme-toggle:hover {
-            background: rgba(255, 107, 53, 0.1);
+            background: hsl(var(--accent-brand) / 0.1);
             transform: scale(1.1);
         }
         
         .theme-toggle svg {
             width: 24px;
             height: 24px;
-            fill: var(--text-color);
+            fill: hsl(var(--text-000));
         }
         
         @keyframes slideDown {
@@ -86,19 +223,20 @@
         }
         
         .config-card {
-            background: var(--card-bg);
+            background: hsl(var(--bg-100));
             border-radius: 15px;
             padding: 1.5rem;
             margin-bottom: 1rem;
-            box-shadow: 0 4px 6px var(--container-shadow);
+            box-shadow: 0 4px 6px hsl(var(--bg-300) / 0.1);
             transition: all 0.3s ease;
             animation: fadeInUp 0.6s ease-out;
             animation-fill-mode: both;
+            border: 1px solid hsl(var(--bg-200));
         }
         
         .config-card:hover {
             transform: translateY(-5px);
-            box-shadow: 0 10px 25px var(--container-shadow);
+            box-shadow: 0 10px 25px hsl(var(--bg-300) / 0.15);
         }
         
         @keyframes fadeInUp {
@@ -113,16 +251,18 @@
         }
         
         .btn-primary {
-            background: linear-gradient(45deg, var(--primary-color), var(--secondary-color));
+            background: hsl(var(--accent-brand));
             border: none;
             transition: all 0.3s ease;
             position: relative;
             overflow: hidden;
+            color: hsl(var(--oncolor-100));
         }
         
         .btn-primary:hover {
             transform: translateY(-2px);
-            box-shadow: 0 8px 15px rgba(255, 107, 53, 0.3);
+            box-shadow: 0 8px 15px hsl(var(--accent-brand) / 0.3);
+            background: hsl(var(--accent-main-100));
         }
         
         .icon-button {
@@ -143,28 +283,28 @@
         }
         
         .icon-button.download {
-            color: var(--primary-color);
+            color: hsl(var(--accent-brand));
         }
         
         .icon-button.download:hover {
-            background: rgba(255, 107, 53, 0.1);
+            background: hsl(var(--accent-brand) / 0.1);
         }
         
         .icon-button.copy {
-            color: var(--primary-color);
+            color: hsl(var(--accent-brand));
         }
         
         .icon-button.copy:hover {
-            background: rgba(255, 107, 53, 0.1);
+            background: hsl(var(--accent-brand) / 0.1);
         }
         
         .icon-button.copy-with-password {
-            color: var(--primary-color);
+            color: hsl(var(--accent-brand));
             position: relative;
         }
         
         .icon-button.copy-with-password:hover {
-            background: rgba(255, 107, 53, 0.1);
+            background: hsl(var(--accent-brand) / 0.1);
         }
         
         .icon-button svg {
@@ -193,12 +333,13 @@
         }
         
         .form-container {
-            background: var(--card-bg);
+            background: hsl(var(--bg-100));
             border-radius: 15px;
             padding: 2rem;
             margin-bottom: 2rem;
-            box-shadow: 0 4px 6px var(--container-shadow);
+            box-shadow: 0 4px 6px hsl(var(--bg-300) / 0.1);
             animation: fadeIn 0.8s ease-out;
+            border: 1px solid hsl(var(--bg-200));
         }
         
         @keyframes fadeIn {
@@ -233,12 +374,13 @@
         }
         
         .config-url {
-            font-family: 'Courier New', monospace;
-            background: var(--config-url-bg);
+            font-family: var(--font-mono);
+            background: hsl(var(--bg-200));
             padding: 0.5rem;
             border-radius: 5px;
-            border-left: 4px solid var(--primary-color);
-            color: var(--text-color);
+            border-left: 4px solid hsl(var(--accent-brand));
+            color: hsl(var(--text-000));
+            font-size: 0.813rem;
         }
         
         .config-actions {
@@ -262,7 +404,7 @@
         .logout-btn {
             background: none;
             border: none;
-            color: var(--primary-color);
+            color: hsl(var(--accent-brand));
             text-decoration: none;
             padding: 0.5rem 1rem;
             border-radius: 8px;
@@ -270,26 +412,202 @@
         }
         
         .logout-btn:hover {
-            background: rgba(255, 107, 53, 0.1);
+            background: hsl(var(--accent-brand) / 0.1);
             transform: translateY(-1px);
         }
         
+        .claude-response h1, .claude-response h2, .claude-response h3, .claude-response p, .claude-response p b, .claude-response small, .claude-response p small b, .claude-response code, .claude-response code small {
+            color: hsl(var(--text-000));
+        }
+        
         h1, h2, h3, p, label, small {
-            color: var(--text-color);
+            color: hsl(var(--text-000));
+            font-family: var(--font-ui);
         }
         
-        input[type="text"], input[type="url"], input[type="password"] {
-            background: var(--input-bg);
-            color: var(--text-color);
-            border: 1px solid var(--border-color);
+        .claude-response h1 {
+            font-family: var(--font-claude-response);
+            font-size: 1.75rem;
+            font-weight: 600;
+            line-height: 1.3;
+            letter-spacing: -0.02em
+        }
+
+        .claude-response h2 {
+            font-family: var(--font-claude-response);
+            font-size: 1.25rem;
+            font-weight: 600;
+            line-height: 1.4;
+            letter-spacing: -0.01em
+        }
+
+        .claude-response h3, .claude-response h4, .claude-response h5, .claude-response h6 {
+            font-family: var(--font-claude-response);
+            font-size: 1rem;
+            font-weight: 600;
+            line-height: 1.35;
+            letter-spacing: -0.01em
+        }
+
+        .claude-response p {
+            font-weight: 400
+        }
+
+        .claude-response p, .claude-response p b {
+            font-family: var(--font-claude-response);
+            font-size: 1rem;
+            line-height: 1.5;
+            letter-spacing: -0.005em
+        }
+
+        .claude-response p b {
+            font-weight: 600
+        }
+
+        .claude-response small {
+            font-weight: 400
+        }
+
+        .claude-response p small b, .claude-response small {
+            font-family: var(--font-claude-response);
+            font-size: 0.875rem;
+            line-height: 1.5;
+            letter-spacing: -0.005em
+        }
+
+        .claude-response p small b {
+            font-weight: 600
+        }
+
+        .claude-response code {
+            font-size: 0.813rem
+        }
+
+        .claude-response code, .claude-response code small {
+            font-family: var(--font-mono);
+            font-weight: 400;
+            line-height: 1.5
+        }
+
+        .claude-response code small {
+            font-size: 0.688rem
+        }
+
+        .hljs {
+            display: block;
+            overflow-x: auto;
+            padding: 0.5em;
+            color: #abb2bf;
+            background: #282c34
+        }
+
+        .hljs-comment, .hljs-quote {
+            color: #5c6370;
+            font-style: italic
+        }
+
+        .hljs-doctag, .hljs-formula, .hljs-keyword {
+            color: #c678dd
+        }
+
+        .hljs-deletion, .hljs-name, .hljs-section, .hljs-selector-tag, .hljs-subst {
+            color: #e06c75
+        }
+
+        .hljs-literal {
+            color: #56b6c2
+        }
+
+        .hljs-addition, .hljs-attribute, .hljs-meta-string, .hljs-regexp, .hljs-string {
+            color: #98c379
+        }
+
+        .hljs-built_in, .hljs-class .hljs-title {
+            color: #e6c07b
+        }
+
+        .hljs-attr, .hljs-number, .hljs-selector-attr, .hljs-selector-class, .hljs-selector-pseudo, .hljs-template-variable, .hljs-type, .hljs-variable {
+            color: #d19a66
+        }
+
+        .hljs-bullet, .hljs-link, .hljs-meta, .hljs-selector-id, .hljs-symbol, .hljs-title {
+            color: #61aeee
+        }
+
+        .hljs-emphasis {
+            font-style: italic
+        }
+
+        .hljs-strong {
+            font-weight: 700
+        }
+
+        .hljs-link {
+            text-decoration: underline
+        }
+
+        h1 {
+            font-family: var(--font-claude-response);
+            font-size: 1.75rem;
+            font-weight: 600;
+            line-height: 1.3;
+            letter-spacing: -0.02em;
         }
         
-        input[type="text"]:focus, input[type="url"]:focus, input[type="password"]:focus {
-            border-color: var(--primary-color);
+        h2 {
+            font-family: var(--font-claude-response);
+            font-size: 1.25rem;
+            font-weight: 600;
+            line-height: 1.4;
+            letter-spacing: -0.01em;
+        }
+        
+        h3, h4, h5, h6 {
+            font-family: var(--font-claude-response);
+            font-size: 1rem;
+            font-weight: 600;
+            line-height: 1.35;
+            letter-spacing: -0.01em;
+        }
+        
+        p {
+            font-family: var(--font-claude-response);
+            font-size: 1rem;
+            font-weight: 400;
+            line-height: 1.5;
+            letter-spacing: -0.005em;
+        }
+        
+        small {
+            font-family: var(--font-claude-response);
+            font-size: 0.875rem;
+            font-weight: 400;
+            line-height: 1.5;
+            letter-spacing: -0.005em;
+        }
+        
+        code {
+            font-family: var(--font-mono);
+            font-size: 0.813rem;
+            font-weight: 400;
+            line-height: 1.5;
+        }
+        
+        input[type="text"], input[type="url"], input[type="password"], select {
+            background: hsl(var(--bg-100));
+            color: hsl(var(--text-000));
+            border: 1px solid hsl(var(--bg-300));
+            font-family: var(--font-ui);
+        }
+        
+        input[type="text"]:focus, input[type="url"]:focus, input[type="password"]:focus, select:focus {
+            border-color: hsl(var(--accent-brand));
+            outline: none;
+            box-shadow: 0 0 0 3px hsl(var(--accent-brand) / 0.1);
         }
     </style>
 </head>
-<body data-theme="light">
+<body data-theme="claude">
     <div class="header">
         <div class="container">
             <nav>
@@ -365,8 +683,58 @@
                         <small>{{ i18n.t("setup_method_description") }}</small>
                     </label>
                 </div>
+                <div class="grid">
+                    <label for="anthropic_model">
+                        {{ i18n.t("anthropic_model") }}
+                        <input type="text" id="anthropic_model" name="anthropic_model" placeholder="claude-3-5-sonnet-20241022">
+                        <small>{{ i18n.t("anthropic_model_description") }}</small>
+                    </label>
+                    <label for="anthropic_small_fast_model">
+                        {{ i18n.t("anthropic_small_fast_model") }}
+                        <input type="text" id="anthropic_small_fast_model" name="anthropic_small_fast_model" placeholder="claude-3-haiku-20240307">
+                        <small>{{ i18n.t("anthropic_small_fast_model_description") }}</small>
+                    </label>
+                </div>
+                <div class="grid">
+                    <label for="anthropic_small_fast_model_aws_region">
+                        {{ i18n.t("anthropic_small_fast_model_aws_region") }}
+                        <input type="text" id="anthropic_small_fast_model_aws_region" name="anthropic_small_fast_model_aws_region" placeholder="us-east-1">
+                        <small>{{ i18n.t("anthropic_small_fast_model_aws_region_description") }}</small>
+                    </label>
+                </div>
                 <button type="submit" class="btn-primary btn-shimmer pulse">{{ i18n.t("add_configuration") }}</button>
             </form>
+            
+            <div style="margin-top: 2rem; padding: 1.5rem; background: hsl(var(--bg-200)); border-radius: 10px; border-left: 4px solid hsl(var(--accent-brand));">
+                <h3 style="margin-top: 0; color: hsl(var(--text-000));">{{ i18n.t("manual_config_title") }}</h3>
+                <p style="margin-bottom: 1rem; color: hsl(var(--text-000));">{{ i18n.t("manual_config_description") }}</p>
+                
+                <div class="unix-config" style="background: hsl(var(--bg-100)); padding: 1rem; border-radius: 8px; margin-bottom: 1rem;">
+                    <h4 style="margin-top: 0; color: hsl(var(--text-000));">{{ i18n.t("macos_linux_wsl") }}</h4>
+                    <pre style="background: hsl(var(--bg-300)); padding: 1rem; border-radius: 5px; overflow-x: auto; font-family: var(--font-mono); font-size: 0.9rem; color: hsl(var(--text-000));">export ANTHROPIC_BASE_URL=https://api.aicodemirror.com/api/claudecode
+export ANTHROPIC_API_KEY={{ i18n.t("your_key") }}
+export ANTHROPIC_AUTH_TOKEN=""
+{% if i18n.current_language() == "zh" %}# 可选配置{% else %}# Optional configuration{% endif %}
+{% if i18n.current_language() == "zh" %}export ANTHROPIC_MODEL="claude-3-5-sonnet-20241022"
+export ANTHROPIC_SMALL_FAST_MODEL="claude-3-haiku-20240307"
+export ANTHROPIC_SMALL_FAST_MODEL_AWS_REGION="us-east-1"{% else %}export ANTHROPIC_MODEL="claude-3-5-sonnet-20241022"
+export ANTHROPIC_SMALL_FAST_MODEL="claude-3-haiku-20240307"
+export ANTHROPIC_SMALL_FAST_MODEL_AWS_REGION="us-east-1"{% endif %}</pre>
+                </div>
+                
+                <div class="windows-config" style="background: hsl(var(--bg-100)); padding: 1rem; border-radius: 8px;">
+                    <h4 style="margin-top: 0; color: hsl(var(--text-000));">{{ i18n.t("windows_native") }}</h4>
+                    <pre style="background: hsl(var(--bg-300)); padding: 1rem; border-radius: 5px; overflow-x: auto; font-family: var(--font-mono); font-size: 0.9rem; color: hsl(var(--text-000));">$env:ANTHROPIC_BASE_URL="https://api.aicodemirror.com/api/claudecode"
+$env:ANTHROPIC_API_KEY="{{ i18n.t("your_key") }}"
+$env:ANTHROPIC_AUTH_TOKEN=""
+{% if i18n.current_language() == "zh" %}# 可选配置{% else %}# Optional configuration{% endif %}
+{% if i18n.current_language() == "zh" %}$env:ANTHROPIC_MODEL="claude-3-5-sonnet-20241022"
+$env:ANTHROPIC_SMALL_FAST_MODEL="claude-3-haiku-20240307"
+$env:ANTHROPIC_SMALL_FAST_MODEL_AWS_REGION="us-east-1"{% else %}$env:ANTHROPIC_MODEL="claude-3-5-sonnet-20241022"
+$env:ANTHROPIC_SMALL_FAST_MODEL="claude-3-haiku-20240307"
+$env:ANTHROPIC_SMALL_FAST_MODEL_AWS_REGION="us-east-1"{% endif %}</pre>
+                </div>
+            </div>
         </div>
         
         <h2>{{ i18n.t("existing_configurations") }}</h2>
@@ -434,17 +802,17 @@
         // Theme management
         function toggleTheme() {
             const body = document.body;
-            const currentTheme = body.getAttribute('data-theme');
-            const newTheme = currentTheme === 'light' ? 'dark' : 'light';
+            const currentMode = body.getAttribute('data-mode');
+            const newMode = currentMode === 'light' ? 'dark' : 'light';
             
-            body.setAttribute('data-theme', newTheme);
-            localStorage.setItem('theme', newTheme);
+            body.setAttribute('data-mode', newMode);
+            localStorage.setItem('theme', newMode);
             
             // Toggle icons
             const lightIcon = document.getElementById('light-icon');
             const darkIcon = document.getElementById('dark-icon');
             
-            if (newTheme === 'dark') {
+            if (newMode === 'dark') {
                 lightIcon.style.display = 'none';
                 darkIcon.style.display = 'block';
             } else {
@@ -455,13 +823,13 @@
         
         // Initialize theme from localStorage
         document.addEventListener('DOMContentLoaded', function() {
-            const savedTheme = localStorage.getItem('theme') || 'light';
-            document.body.setAttribute('data-theme', savedTheme);
+            const savedMode = localStorage.getItem('theme') || 'light';
+            document.body.setAttribute('data-mode', savedMode);
             
             const lightIcon = document.getElementById('light-icon');
             const darkIcon = document.getElementById('dark-icon');
             
-            if (savedTheme === 'dark') {
+            if (savedMode === 'dark') {
                 lightIcon.style.display = 'none';
                 darkIcon.style.display = 'block';
             } else {
@@ -472,6 +840,9 @@
             // Initialize language - sync with current page language
             const currentLang = document.getElementById('language-selector').value;
             localStorage.setItem('language', currentLang);
+            
+            // Initialize form listeners
+            initializeFormListeners();
         });
         
         // Language switching
@@ -486,6 +857,69 @@
             window.location.href = url.toString();
         }
         
+        // Function to update manual configuration section
+        function updateManualConfig() {
+            const baseUrl = document.getElementById('anthropic_base_url').value || 'https://api.anthropic.com';
+            const apiKey = document.getElementById('anthropic_api_key').value || '{{ i18n.t("your_key") }}';
+            const authToken = document.getElementById('anthropic_auth_token').value || '';
+            const model = document.getElementById('anthropic_model').value || '';
+            const smallModel = document.getElementById('anthropic_small_fast_model').value || '';
+            const awsRegion = document.getElementById('anthropic_small_fast_model_aws_region').value || '';
+            
+            // Determine which auth method to use
+            const useApiKey = apiKey !== '{{ i18n.t("your_key") }}' && apiKey !== '';
+            const authExport = useApiKey ? `export ANTHROPIC_API_KEY=${apiKey}` : `export ANTHROPIC_AUTH_TOKEN=${authToken}`;
+            const authUnset = useApiKey ? 'export ANTHROPIC_AUTH_TOKEN=""' : 'export ANTHROPIC_API_KEY=""';
+            
+            // Build optional configuration lines
+            const optionalLines = [];
+            if (model) optionalLines.push(`export ANTHROPIC_MODEL="${model}"`);
+            if (smallModel) optionalLines.push(`export ANTHROPIC_SMALL_FAST_MODEL="${smallModel}"`);
+            if (awsRegion) optionalLines.push(`export ANTHROPIC_SMALL_FAST_MODEL_AWS_REGION="${awsRegion}"`);
+            
+            const optionalConfig = optionalLines.length > 0 ? 
+                `{% if i18n.current_language() == "zh" %}# 可选配置{% else %}# Optional configuration{% endif %}\n${optionalLines.join('\n')}` : '';
+            
+            // Update Unix/Linux section
+            const unixPre = document.querySelector('.unix-config pre');
+            if (unixPre) {
+                unixPre.innerHTML = `export ANTHROPIC_BASE_URL=${baseUrl}\n${authExport}\n${authUnset}\n${optionalConfig}`.trim();
+            }
+            
+            // Update Windows section
+            const windowsAuthExport = useApiKey ? `$env:ANTHROPIC_API_KEY="${apiKey}"` : `$env:ANTHROPIC_AUTH_TOKEN="${authToken}"`;
+            const windowsAuthUnset = useApiKey ? '$env:ANTHROPIC_AUTH_TOKEN=""' : '$env:ANTHROPIC_API_KEY=""';
+            
+            const windowsOptionalLines = [];
+            if (model) windowsOptionalLines.push(`$env:ANTHROPIC_MODEL="${model}"`);
+            if (smallModel) windowsOptionalLines.push(`$env:ANTHROPIC_SMALL_FAST_MODEL="${smallModel}"`);
+            if (awsRegion) windowsOptionalLines.push(`$env:ANTHROPIC_SMALL_FAST_MODEL_AWS_REGION="${awsRegion}"`);
+            
+            const windowsOptionalConfig = windowsOptionalLines.length > 0 ? 
+                `{% if i18n.current_language() == "zh" %}# 可选配置{% else %}# Optional configuration{% endif %}\n${windowsOptionalLines.join('\n')}` : '';
+            
+            const windowsPre = document.querySelector('.windows-config pre');
+            if (windowsPre) {
+                windowsPre.innerHTML = `$env:ANTHROPIC_BASE_URL="${baseUrl}"\n${windowsAuthExport}\n${windowsAuthUnset}\n${windowsOptionalConfig}`.trim();
+            }
+        }
+        
+        // Add event listeners for form inputs and initialize
+        function initializeFormListeners() {
+            // Add event listeners to form inputs for real-time updates
+            const formInputs = ['anthropic_base_url', 'anthropic_api_key', 'anthropic_auth_token', 'anthropic_model', 'anthropic_small_fast_model', 'anthropic_small_fast_model_aws_region'];
+            formInputs.forEach(inputId => {
+                const input = document.getElementById(inputId);
+                if (input) {
+                    input.addEventListener('input', updateManualConfig);
+                    input.addEventListener('change', updateManualConfig);
+                }
+            });
+            
+            // Initial update
+            updateManualConfig();
+        }
+        
         // Original form handling code
         document.getElementById('configForm').addEventListener('submit', async (e) => {
             e.preventDefault();
@@ -497,7 +931,10 @@
                 anthropic_api_key: formData.get('anthropic_api_key') || null,
                 anthropic_auth_token: formData.get('anthropic_auth_token') || null,
                 access_password: formData.get('access_password') || null,
-                setup_method: formData.get('setup_method') || 'config_file'
+                setup_method: formData.get('setup_method') || 'config_file',
+                anthropic_model: formData.get('anthropic_model') || null,
+                anthropic_small_fast_model: formData.get('anthropic_small_fast_model') || null,
+                anthropic_small_fast_model_aws_region: formData.get('anthropic_small_fast_model_aws_region') || null
             };
             
             // Validate that at least one auth method is provided

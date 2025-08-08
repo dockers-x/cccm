@@ -9,7 +9,7 @@
     "logout": "退出登录",
     "add_new_configuration": "添加新配置",
     "configuration_name": "配置名称",
-    "anthropic_base_url": "Anthropic Base URL",
+    "anthropic_base_url": "Anthropic 基础 URL",
     "api_key_optional": "API Key（可选）",
     "auth_token_optional": "Auth Token（可选）",
     "access_password_optional": "访问密码（可选）",
@@ -44,6 +44,18 @@
     "setup_method": "设置方式",
     "setup_method_description": "选择脚本配置 Claude Code 的方式",
     "use_config_file": "使用配置文件 (settings.json)",
-    "use_environment_variables": "使用环境变量"
+    "use_environment_variables": "使用环境变量",
+    "anthropic_model": "自定义模型名称（可选）",
+    "anthropic_model_description": "要使用的自定义模型名称（参见模型配置）",
+    "anthropic_small_fast_model": "后台任务的 Haiku 类模型（可选）",
+    "anthropic_small_fast_model_description": "后台任务的 Haiku 类模型名称",
+    "anthropic_small_fast_model_aws_region": "小型/快速模型的覆盖 AWS 区域（可选）",
+    "anthropic_small_fast_model_aws_region_description": "使用 Bedrock 时小型/快速模型的覆盖 AWS 区域",
+    "manual_config_title": "手动环境变量配置",
+    "manual_config_description": "您也可以手动配置这些环境变量：",
+    "macos_linux_wsl": "macOS / Windows WSL / Linux",
+    "windows_native": "Windows 原生",
+    "your_key": "你的密钥",
+    "your_token": "你的令牌"
   }
 }
