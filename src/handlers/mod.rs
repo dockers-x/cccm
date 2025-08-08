@@ -647,6 +647,21 @@ main @args
     )
 }
 
+pub async fn get_config(
+    State(pool): State<SqlitePool>,
+    Path(id): Path<String>,
+) -> Result<Json<ConfigRecord>, StatusCode> {
+    let config = sqlx::query_as::<_, ConfigRecord>(
+        "SELECT * FROM config_records WHERE id = ?"
+    )
+    .bind(&id)
+    .fetch_one(&pool)
+    .await
+    .map_err(|_| StatusCode::NOT_FOUND)?;
+    
+    Ok(Json(config))
+}
+
 pub async fn get_config_password(
     State(pool): State<SqlitePool>,
     Path(id): Path<String>,

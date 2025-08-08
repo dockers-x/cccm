@@ -30,6 +30,7 @@ async fn main() -> anyhow::Result<()> {
         .route("/dashboard", get(dashboard))
         .route("/logout", get(logout))
         .route("/api/configs", post(create_config))
+        .route("/api/configs/:id", get(get_config))
         .route("/api/configs/:id", delete(delete_config))
         .route("/api/configs/:id/password", get(get_config_password))
         .route("/download/:id", get(download_script))

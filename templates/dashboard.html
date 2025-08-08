@@ -307,6 +307,24 @@
             background: hsl(var(--accent-brand) / 0.1);
         }
         
+        .icon-button.delete {
+            color: hsl(var(--danger-100));
+        }
+        
+        .icon-button.delete:hover {
+            background: hsl(var(--danger-000) / 0.1);
+            color: hsl(var(--danger-200));
+        }
+        
+        .icon-button.copy-config {
+            color: hsl(var(--accent-secondary-100));
+        }
+        
+        .icon-button.copy-config:hover {
+            background: hsl(var(--accent-secondary-000) / 0.1);
+            color: hsl(var(--accent-secondary-200));
+        }
+        
         .icon-button svg {
             width: 20px;
             height: 20px;
@@ -388,6 +406,19 @@
             gap: 1rem;
             margin-top: 1rem;
             flex-wrap: wrap;
+        }
+        
+        .config-info {
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .config-info:hover {
+            transform: translateY(-2px);
+        }
+        
+        .config-info:hover h3 {
+            color: hsl(var(--accent-brand));
         }
         
         .logo-header {
@@ -704,37 +735,6 @@
                 </div>
                 <button type="submit" class="btn-primary btn-shimmer pulse">{{ i18n.t("add_configuration") }}</button>
             </form>
-            
-            <div style="margin-top: 2rem; padding: 1.5rem; background: hsl(var(--bg-200)); border-radius: 10px; border-left: 4px solid hsl(var(--accent-brand));">
-                <h3 style="margin-top: 0; color: hsl(var(--text-000));">{{ i18n.t("manual_config_title") }}</h3>
-                <p style="margin-bottom: 1rem; color: hsl(var(--text-000));">{{ i18n.t("manual_config_description") }}</p>
-                
-                <div class="unix-config" style="background: hsl(var(--bg-100)); padding: 1rem; border-radius: 8px; margin-bottom: 1rem;">
-                    <h4 style="margin-top: 0; color: hsl(var(--text-000));">{{ i18n.t("macos_linux_wsl") }}</h4>
-                    <pre style="background: hsl(var(--bg-300)); padding: 1rem; border-radius: 5px; overflow-x: auto; font-family: var(--font-mono); font-size: 0.9rem; color: hsl(var(--text-000));">export ANTHROPIC_BASE_URL=https://api.aicodemirror.com/api/claudecode
-export ANTHROPIC_API_KEY={{ i18n.t("your_key") }}
-export ANTHROPIC_AUTH_TOKEN=""
-{% if i18n.current_language() == "zh" %}# 可选配置{% else %}# Optional configuration{% endif %}
-{% if i18n.current_language() == "zh" %}export ANTHROPIC_MODEL="claude-3-5-sonnet-20241022"
-export ANTHROPIC_SMALL_FAST_MODEL="claude-3-haiku-20240307"
-export ANTHROPIC_SMALL_FAST_MODEL_AWS_REGION="us-east-1"{% else %}export ANTHROPIC_MODEL="claude-3-5-sonnet-20241022"
-export ANTHROPIC_SMALL_FAST_MODEL="claude-3-haiku-20240307"
-export ANTHROPIC_SMALL_FAST_MODEL_AWS_REGION="us-east-1"{% endif %}</pre>
-                </div>
-                
-                <div class="windows-config" style="background: hsl(var(--bg-100)); padding: 1rem; border-radius: 8px;">
-                    <h4 style="margin-top: 0; color: hsl(var(--text-000));">{{ i18n.t("windows_native") }}</h4>
-                    <pre style="background: hsl(var(--bg-300)); padding: 1rem; border-radius: 5px; overflow-x: auto; font-family: var(--font-mono); font-size: 0.9rem; color: hsl(var(--text-000));">$env:ANTHROPIC_BASE_URL="https://api.aicodemirror.com/api/claudecode"
-$env:ANTHROPIC_API_KEY="{{ i18n.t("your_key") }}"
-$env:ANTHROPIC_AUTH_TOKEN=""
-{% if i18n.current_language() == "zh" %}# 可选配置{% else %}# Optional configuration{% endif %}
-{% if i18n.current_language() == "zh" %}$env:ANTHROPIC_MODEL="claude-3-5-sonnet-20241022"
-$env:ANTHROPIC_SMALL_FAST_MODEL="claude-3-haiku-20240307"
-$env:ANTHROPIC_SMALL_FAST_MODEL_AWS_REGION="us-east-1"{% else %}$env:ANTHROPIC_MODEL="claude-3-5-sonnet-20241022"
-$env:ANTHROPIC_SMALL_FAST_MODEL="claude-3-haiku-20240307"
-$env:ANTHROPIC_SMALL_FAST_MODEL_AWS_REGION="us-east-1"{% endif %}</pre>
-                </div>
-            </div>
         </div>
         
         <h2>{{ i18n.t("existing_configurations") }}</h2>
@@ -745,24 +745,26 @@ $env:ANTHROPIC_SMALL_FAST_MODEL_AWS_REGION="us-east-1"{% endif %}</pre>
         {% else %}
         {% for config in configs %}
         <div class="config-card" style="animation-delay: {{ loop.index * 100 }}ms;">
-            <h3>{{ config.name }}</h3>
-            <div class="config-url">{{ config.anthropic_base_url }}</div>
-            <p>
-                <strong>{{ i18n.t("auth_method") }}:</strong> 
-                {% if config.anthropic_api_key.is_some() %}
-                {{ i18n.t("api_key_masked") }}
-                {% else if config.anthropic_auth_token.is_some() %}
-                {{ i18n.t("auth_token_masked") }}
-                {% else %}
-                {{ i18n.t("no_auth_configured") }}
-                {% endif %}
-                {% if config.access_password.is_some() %}
-                <span style="color: #ff6b35; margin-left: 1rem;">{{ i18n.t("password_protected") }}</span>
-                {% endif %}
-            </p>
-            <p><small>{{ i18n.t("created") }}: {{ config.created_at.format("%Y-%m-%d %H:%M:%S") }}</small></p>
+            <div class="config-info" onclick="showManualConfigModal('{{ config.id }}', '{{ config.name }}')">
+                <h3>{{ config.name }}</h3>
+                <div class="config-url">{{ config.anthropic_base_url }}</div>
+                <p>
+                    <strong>{{ i18n.t("auth_method") }}:</strong> 
+                    {% if config.anthropic_api_key.is_some() %}
+                    {{ i18n.t("api_key_masked") }}
+                    {% else if config.anthropic_auth_token.is_some() %}
+                    {{ i18n.t("auth_token_masked") }}
+                    {% else %}
+                    {{ i18n.t("no_auth_configured") }}
+                    {% endif %}
+                    {% if config.access_password.is_some() %}
+                    <span style="color: #ff6b35; margin-left: 1rem;">{{ i18n.t("password_protected") }}</span>
+                    {% endif %}
+                </p>
+                <p><small>{{ i18n.t("created") }}: {{ config.created_at.format("%Y-%m-%d %H:%M:%S") }}</small></p>
+            </div>
             
-            <div class="config-actions">
+            <div class="config-actions" onclick="event.stopPropagation()">
                 <a href="/download/{{ config.id }}" class="icon-button download" title="{{ i18n.t("download_script") }}">
                     <svg viewBox="0 0 1220 1024" xmlns="http://www.w3.org/2000/svg">
                         <path d="M600.989176 0C569.513691 0 543.968467 25.485345 543.932546 56.923835L543.36707 551.314562C494.339088 505.555172 396.403891 414.148901 396.403891 414.148901 373.434921 392.711249 337.436282 393.952581 315.998598 416.921502 294.560914 439.890424 295.80223 475.889079 318.7712 497.326746L550.656163 713.752787C579.096218 740.296737 623.672401 740.320516 652.137813 713.752787L884.022938 497.326746C906.991746 475.889079 908.233224 439.890424 886.79554 416.921502 865.357857 393.952581 829.359218 392.711249 806.390248 414.148901 806.390248 414.148901 706.630217 507.258214 656.66048 553.896732L656.66048 56.931799C656.66048 25.489245 631.095426 0 599.668866 0L600.989176 0 600.989176 0 600.989176 0ZM113.777778 902.095238 113.777778 520.126984C113.777778 488.708112 88.30781 463.238095 56.888889 463.238095 25.469968 463.238095 0 488.708112 0 520.126984L0 934.565758C0 979.470515 36.483657 1015.873016 81.402961 1015.873016L1137.644658 1015.873016C1182.602159 1015.873016 1219.047619 979.419624 1219.047619 934.565758L1219.047619 520.126984C1219.047619 488.708112 1193.577651 463.238095 1162.15873 463.238095 1130.73981 463.238095 1105.269841 488.708112 1105.269841 520.126984L1105.269841 902.095238 113.777778 902.095238 113.777778 902.095238Z" fill="currentColor"/>
@@ -786,16 +788,63 @@ $env:ANTHROPIC_SMALL_FAST_MODEL_AWS_REGION="us-east-1"{% endif %}</pre>
                 </button>
                 {% endif %}
                 
+                
                 <button onclick="deleteConfig('{{ config.id }}')" class="icon-button delete" title="{{ i18n.t("delete_configuration") }}">
                     <svg viewBox="0 0 1024 1024" xmlns="http://www.w3.org/2000/svg">
                         <path d="M690.604651 72.442047H332.276093c-19.765581 0-35.72093-15.955349-35.72093-35.720931s15.955349-35.72093 35.72093-35.72093H690.604651c19.765581 0 35.72093 15.955349 35.72093 35.72093s-15.955349 35.72093-35.72093 35.720931z m284.648186 143.00279H47.627907c-19.765581 0-35.72093-15.955349-35.72093-35.72093s15.955349-35.72093 35.72093-35.72093h927.62493c19.765581 0 35.72093 15.955349 35.72093 35.72093s-15.955349 35.72093-35.72093 35.72093z m-106.043535 714.418605v-535.813954c0-19.765581-15.955349-35.72093-35.72093-35.72093s-35.72093 15.955349-35.72093 35.72093v535.813954H226.232558v-714.418605H154.790698v714.418605c0 39.412093 32.029767 71.44186 71.44186 71.44186h571.534884c39.412093 0 71.44186-32.029767 71.44186-71.44186z" fill="currentColor"/>
-                        <path d="M404.837209 786.765395c-19.765581 0-35.72093-15.955349-35.72093-35.72093V394.049488c0-19.765581 15.955349-35.72093 35.72093-35.72093s35.72093 15.955349 35.720931 35.72093v356.971163c0 19.765581-16.074419 35.72093-35.720931 35.72093z m214.325582 0c-19.765581 0-35.72093-15.955349-35.720931-35.72093V394.049488c0-19.765581 15.955349-35.72093 35.720931-35.72093s35.72093 15.955349 35.72093 35.72093v356.971163c0 19.765581-16.074419 35.72093-35.72093 35.72093z" fill="currentColor"/>
+                        <path d="M404.837209 786.765395c-19.765581 0-35.72093-15.955349-35.72093-35.72093V394.049488c0-19.765581 15.955349-35.72093 35.72093-35.72093s35.72093 15.955349 35.720931 35.72093v356.971163c0 19.765581-16.074419 35.72093-35.720931 35.72093z m214.325582 0c-19.765581 0-35.72093-15.955349-35.720931-35.72093V394.049488c0-19.765581 15.955349-35.72093 35.720931-35.72093s35.72093 15.955349 35.72093 35.72093v356.971163c0 19.765581-16.074419 35.72093-35.720931 35.72093z" fill="currentColor"/>
                     </svg>
                 </button>
             </div>
         </div>
         {% endfor %}
         {% endif %}
+    </div>
+    
+    <!-- Manual Configuration Modal -->
+    <div id="manualConfigModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.5); z-index: 10000; backdrop-filter: blur(5px);">
+        <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: hsl(var(--bg-100)); border-radius: 15px; box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3); border: 1px solid hsl(var(--bg-300)); min-width: 600px; max-width: 90vw; max-height: 90vh; display: flex; flex-direction: column;">
+            <!-- Fixed Header -->
+            <div style="padding: 2rem 2rem 1rem 2rem; border-bottom: 1px solid hsl(var(--bg-300));">
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <h3 id="modalTitle" style="margin: 0; color: hsl(var(--text-000)); font-family: var(--font-claude-response);">{{ i18n.t("manual_config_title") }}</h3>
+                    <button onclick="closeManualConfigModal()" style="background: none; border: none; font-size: 1.5rem; cursor: pointer; color: hsl(var(--text-000)); padding: 0.5rem; border-radius: 8px; transition: all 0.3s ease;">
+                        <svg width="24" height="24" viewBox="0 0 1024 1024" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M585.142857 512l292.571429-292.571429c20.571429-20.571429 20.571429-54.857143 0-75.428571-20.571429-20.571429-54.857143-20.571429-75.428571 0L512 438.857143 219.428571 146.285714c-20.571429-20.571429-54.857143-20.571429-75.428571 0-20.571429 20.571429-20.571429 54.857143 0 75.428571L438.857143 512 146.285714 804.571429c-20.571429 20.571429-20.571429 54.857143 0 75.428571 20.571429 20.571429 54.857143 20.571429 75.428571 0L512 585.142857l292.571429 292.571429c20.571429 20.571429 54.857143 20.571429 75.428571 0 20.571429-20.571429 20.571429-54.857143 0-75.428571L585.142857 512z" fill="currentColor"/>
+                        </svg>
+                    </button>
+                </div>
+                <p style="margin: 1rem 0 0 0; color: hsl(var(--text-000));">{{ i18n.t("manual_config_description") }}</p>
+            </div>
+            
+            <!-- Scrollable Content -->
+            <div style="padding: 2rem; overflow-y: auto; flex: 1; max-height: calc(90vh - 120px);">
+            
+            <div id="modalUnixConfig" style="background: hsl(var(--bg-100)); padding: 1rem; border-radius: 8px; margin-bottom: 1rem; border: 1px solid hsl(var(--bg-300));">
+                <h4 style="margin-top: 0; margin-bottom: 1rem; color: hsl(var(--text-000));">{{ i18n.t("macos_linux_wsl") }}</h4>
+                <pre id="modalUnixPre" style="background: hsl(var(--bg-300)); padding: 1rem; border-radius: 5px; overflow-x: auto; font-family: var(--font-mono); font-size: 0.9rem; color: hsl(var(--text-000)); white-space: pre-wrap; word-break: break-all;"></pre>
+                <button onclick="copyToClipboard('modalUnixPre')" style="margin-top: 0.5rem; padding: 0.5rem 1rem; background: hsl(var(--accent-brand)); color: hsl(var(--oncolor-100)); border: none; border-radius: 5px; cursor: pointer; font-size: 0.8rem;">{{ i18n.t("copy_commands") }}</button>
+            </div>
+            
+            <div id="modalWindowsConfig" style="background: hsl(var(--bg-100)); padding: 1rem; border-radius: 8px; border: 1px solid hsl(var(--bg-300));">
+                <h4 style="margin-top: 0; margin-bottom: 1rem; color: hsl(var(--text-000));">{{ i18n.t("windows_native") }}</h4>
+                
+                <!-- PowerShell Section -->
+                <div style="margin-bottom: 1rem;">
+                    <h5 style="margin-top: 0; margin-bottom: 0.5rem; color: hsl(var(--text-000)); font-size: 0.9rem;">{{ i18n.t("powershell_current_session") }}</h5>
+                    <pre id="modalWindowsPowerShellPre" style="background: hsl(var(--bg-300)); padding: 1rem; border-radius: 5px; overflow-x: auto; font-family: var(--font-mono); font-size: 0.9rem; color: hsl(var(--text-000)); white-space: pre-wrap; word-break: break-all;"></pre>
+                    <button onclick="copyToClipboard('modalWindowsPowerShellPre')" style="margin-top: 0.5rem; padding: 0.5rem 1rem; background: hsl(var(--accent-brand)); color: hsl(var(--oncolor-100)); border: none; border-radius: 5px; cursor: pointer; font-size: 0.8rem;">{{ i18n.t("copy_commands") }}</button>
+                </div>
+                
+                <!-- setx Section -->
+                <div>
+                    <h5 style="margin-top: 0; margin-bottom: 0.5rem; color: hsl(var(--text-000)); font-size: 0.9rem;">{{ i18n.t("setx_persistent") }}</h5>
+                    <pre id="modalWindowsSetxPre" style="background: hsl(var(--bg-300)); padding: 1rem; border-radius: 5px; overflow-x: auto; font-family: var(--font-mono); font-size: 0.9rem; color: hsl(var(--text-000)); white-space: pre-wrap; word-break: break-all;"></pre>
+                    <button onclick="copyToClipboard('modalWindowsSetxPre')" style="margin-top: 0.5rem; padding: 0.5rem 1rem; background: hsl(var(--accent-brand)); color: hsl(var(--oncolor-100)); border: none; border-radius: 5px; cursor: pointer; font-size: 0.8rem;">{{ i18n.t("copy_commands") }}</button>
+                </div>
+            </div>
+            </div>
+        </div>
     </div>
     
     <script>
@@ -869,7 +918,7 @@ $env:ANTHROPIC_SMALL_FAST_MODEL_AWS_REGION="us-east-1"{% endif %}</pre>
             // Determine which auth method to use
             const useApiKey = apiKey !== '{{ i18n.t("your_key") }}' && apiKey !== '';
             const authExport = useApiKey ? `export ANTHROPIC_API_KEY=${apiKey}` : `export ANTHROPIC_AUTH_TOKEN=${authToken}`;
-            const authUnset = useApiKey ? 'export ANTHROPIC_AUTH_TOKEN=""' : 'export ANTHROPIC_API_KEY=""';
+            const authUnset = useApiKey ? 'unset ANTHROPIC_AUTH_TOKEN' : 'unset ANTHROPIC_API_KEY';
             
             // Build optional configuration lines
             const optionalLines = [];
@@ -888,19 +937,46 @@ $env:ANTHROPIC_SMALL_FAST_MODEL_AWS_REGION="us-east-1"{% endif %}</pre>
             
             // Update Windows section
             const windowsAuthExport = useApiKey ? `$env:ANTHROPIC_API_KEY="${apiKey}"` : `$env:ANTHROPIC_AUTH_TOKEN="${authToken}"`;
-            const windowsAuthUnset = useApiKey ? '$env:ANTHROPIC_AUTH_TOKEN=""' : '$env:ANTHROPIC_API_KEY=""';
+            const windowsAuthUnsetPowerShell = useApiKey ? 'Remove-Item Env:ANTHROPIC_AUTH_TOKEN -ErrorAction SilentlyContinue' : 'Remove-Item Env:ANTHROPIC_API_KEY -ErrorAction SilentlyContinue';
+            const windowsAuthUnsetSetx = useApiKey ? 'setx ANTHROPIC_AUTH_TOKEN ""' : 'setx ANTHROPIC_API_KEY ""';
             
-            const windowsOptionalLines = [];
-            if (model) windowsOptionalLines.push(`$env:ANTHROPIC_MODEL="${model}"`);
-            if (smallModel) windowsOptionalLines.push(`$env:ANTHROPIC_SMALL_FAST_MODEL="${smallModel}"`);
-            if (awsRegion) windowsOptionalLines.push(`$env:ANTHROPIC_SMALL_FAST_MODEL_AWS_REGION="${awsRegion}"`);
+            const windowsOptionalLinesPowerShell = [];
+            const windowsOptionalLinesSetx = [];
+            if (model) {
+                windowsOptionalLinesPowerShell.push(`$env:ANTHROPIC_MODEL="${model}"`);
+                windowsOptionalLinesSetx.push(`setx ANTHROPIC_MODEL "${model}"`);
+            }
+            if (smallModel) {
+                windowsOptionalLinesPowerShell.push(`$env:ANTHROPIC_SMALL_FAST_MODEL="${smallModel}"`);
+                windowsOptionalLinesSetx.push(`setx ANTHROPIC_SMALL_FAST_MODEL "${smallModel}"`);
+            }
+            if (awsRegion) {
+                windowsOptionalLinesPowerShell.push(`$env:ANTHROPIC_SMALL_FAST_MODEL_AWS_REGION="${awsRegion}"`);
+                windowsOptionalLinesSetx.push(`setx ANTHROPIC_SMALL_FAST_MODEL_AWS_REGION "${awsRegion}"`);
+            }
             
-            const windowsOptionalConfig = windowsOptionalLines.length > 0 ? 
-                `{% if i18n.current_language() == "zh" %}# 可选配置{% else %}# Optional configuration{% endif %}\n${windowsOptionalLines.join('\n')}` : '';
+            const windowsOptionalConfigPowerShell = windowsOptionalLinesPowerShell.length > 0 ? 
+                `{% if i18n.current_language() == "zh" %}# 可选配置{% else %}# Optional configuration{% endif %}\n${windowsOptionalLinesPowerShell.join('\n')}` : '';
+            const windowsOptionalConfigSetx = windowsOptionalLinesSetx.length > 0 ? 
+                `{% if i18n.current_language() == "zh" %}# 可选配置{% else %}# Optional configuration{% endif %}\n${windowsOptionalLinesSetx.join('\n')}` : '';
             
-            const windowsPre = document.querySelector('.windows-config pre');
-            if (windowsPre) {
-                windowsPre.innerHTML = `$env:ANTHROPIC_BASE_URL="${baseUrl}"\n${windowsAuthExport}\n${windowsAuthUnset}\n${windowsOptionalConfig}`.trim();
+            const windowsPowerShellPre = document.getElementById('modalWindowsPowerShellPre');
+            const windowsSetxPre = document.getElementById('modalWindowsSetxPre');
+            
+            if (windowsPowerShellPre) {
+                const windowsPowerShellConfig = `$env:ANTHROPIC_BASE_URL="${baseUrl}"
+${windowsAuthExport}
+${windowsAuthUnsetPowerShell}
+${windowsOptionalConfigPowerShell}`.trim();
+                windowsPowerShellPre.innerHTML = windowsPowerShellConfig;
+            }
+            
+            if (windowsSetxPre) {
+                const windowsSetxConfig = `setx ANTHROPIC_BASE_URL "${baseUrl}"
+${useApiKey ? `setx ANTHROPIC_API_KEY "${apiKey}"` : `setx ANTHROPIC_AUTH_TOKEN "${authToken}"`}
+${windowsAuthUnsetSetx}
+${windowsOptionalConfigSetx}`.trim();
+                windowsSetxPre.innerHTML = windowsSetxConfig;
             }
         }
         
@@ -1028,6 +1104,240 @@ $env:ANTHROPIC_SMALL_FAST_MODEL_AWS_REGION="us-east-1"{% endif %}</pre>
                 console.error('Error getting config password:', error);
             }
             return null;
+        }
+        
+        // Show manual configuration modal
+        async function showManualConfigModal(configId, configName) {
+            try {
+                // Get the configuration data
+                const response = await fetch(`/api/configs/${configId}`);
+                if (!response.ok) {
+                    showToast('Failed to get configuration', 'error');
+                    return;
+                }
+                
+                const config = await response.json();
+                
+                // Update modal title
+                document.getElementById('modalTitle').textContent = `{{ i18n.t("manual_config_title") }} - ${configName}`;
+                
+                // Generate the manual configuration commands
+                const baseUrl = config.anthropic_base_url;
+                const apiKey = config.anthropic_api_key || '{{ i18n.t("your_key") }}';
+                const authToken = config.anthropic_auth_token || '';
+                const model = config.anthropic_model || '';
+                const smallModel = config.anthropic_small_fast_model || '';
+                const awsRegion = config.anthropic_small_fast_model_aws_region || '';
+                
+                // Determine which auth method to use
+                const useApiKey = apiKey !== '{{ i18n.t("your_key") }}' && apiKey !== '';
+                const authExport = useApiKey ? `export ANTHROPIC_API_KEY=${apiKey}` : `export ANTHROPIC_AUTH_TOKEN=${authToken}`;
+                const authUnset = useApiKey ? 'unset ANTHROPIC_AUTH_TOKEN' : 'unset ANTHROPIC_API_KEY';
+                
+                // Build optional configuration lines
+                const optionalLines = [];
+                if (model) optionalLines.push(`export ANTHROPIC_MODEL="${model}"`);
+                if (smallModel) optionalLines.push(`export ANTHROPIC_SMALL_FAST_MODEL="${smallModel}"`);
+                if (awsRegion) optionalLines.push(`export ANTHROPIC_SMALL_FAST_MODEL_AWS_REGION="${awsRegion}"`);
+                
+                const optionalConfig = optionalLines.length > 0 ? 
+                    `# Optional configuration\n${optionalLines.join('\n')}` : '';
+                
+                // Create the Unix/Linux configuration
+                const unixConfig = `export ANTHROPIC_BASE_URL=${baseUrl}\n${authExport}\n${authUnset}\n${optionalConfig}`.trim();
+                
+                // Create the Windows configuration
+                const windowsAuthExport = useApiKey ? `$env:ANTHROPIC_API_KEY="${apiKey}"` : `$env:ANTHROPIC_AUTH_TOKEN="${authToken}"`;
+                const windowsAuthUnsetPowerShell = useApiKey ? 'Remove-Item Env:ANTHROPIC_AUTH_TOKEN -ErrorAction SilentlyContinue' : 'Remove-Item Env:ANTHROPIC_API_KEY -ErrorAction SilentlyContinue';
+                const windowsAuthUnsetSetx = useApiKey ? 'setx ANTHROPIC_AUTH_TOKEN ""' : 'setx ANTHROPIC_API_KEY ""';
+                
+                const windowsOptionalLinesPowerShell = [];
+                const windowsOptionalLinesSetx = [];
+                if (model) {
+                    windowsOptionalLinesPowerShell.push(`$env:ANTHROPIC_MODEL="${model}"`);
+                    windowsOptionalLinesSetx.push(`setx ANTHROPIC_MODEL "${model}"`);
+                }
+                if (smallModel) {
+                    windowsOptionalLinesPowerShell.push(`$env:ANTHROPIC_SMALL_FAST_MODEL="${smallModel}"`);
+                    windowsOptionalLinesSetx.push(`setx ANTHROPIC_SMALL_FAST_MODEL "${smallModel}"`);
+                }
+                if (awsRegion) {
+                    windowsOptionalLinesPowerShell.push(`$env:ANTHROPIC_SMALL_FAST_MODEL_AWS_REGION="${awsRegion}"`);
+                    windowsOptionalLinesSetx.push(`setx ANTHROPIC_SMALL_FAST_MODEL_AWS_REGION "${awsRegion}"`);
+                }
+                
+                const windowsOptionalConfigPowerShell = windowsOptionalLinesPowerShell.length > 0 ? 
+                    `# Optional configuration\n${windowsOptionalLinesPowerShell.join('\n')}` : '';
+                const windowsOptionalConfigSetx = windowsOptionalLinesSetx.length > 0 ? 
+                    `# Optional configuration\n${windowsOptionalLinesSetx.join('\n')}` : '';
+                
+                const windowsPowerShellConfig = `$env:ANTHROPIC_BASE_URL="${baseUrl}"
+${windowsAuthExport}
+${windowsAuthUnsetPowerShell}
+${windowsOptionalConfigPowerShell}`.trim();
+                
+                const windowsSetxConfig = `setx ANTHROPIC_BASE_URL "${baseUrl}"
+${useApiKey ? `setx ANTHROPIC_API_KEY "${apiKey}"` : `setx ANTHROPIC_AUTH_TOKEN "${authToken}"`}
+${windowsAuthUnsetSetx}
+${windowsOptionalConfigSetx}`.trim();
+                
+                // Update modal content
+                document.getElementById('modalUnixPre').textContent = unixConfig;
+                document.getElementById('modalWindowsPowerShellPre').textContent = windowsPowerShellConfig;
+                document.getElementById('modalWindowsSetxPre').textContent = windowsSetxConfig;
+                
+                // Show modal
+                document.getElementById('manualConfigModal').style.display = 'block';
+                document.body.style.overflow = 'hidden';
+                
+            } catch (error) {
+                console.error('Error showing manual config modal:', error);
+                showToast('Failed to load manual configuration', 'error');
+            }
+        }
+        
+        // Close manual configuration modal
+        function closeManualConfigModal() {
+            document.getElementById('manualConfigModal').style.display = 'none';
+            document.body.style.overflow = 'auto';
+        }
+        
+        // Copy to clipboard function for modal content
+        async function copyToClipboard(elementId) {
+            try {
+                const element = document.getElementById(elementId);
+                const text = element.textContent;
+                
+                // Modern clipboard API
+                if (navigator.clipboard && navigator.clipboard.writeText) {
+                    await navigator.clipboard.writeText(text);
+                    showToast('Configuration copied to clipboard!', 'success');
+                } else {
+                    // Fallback for older browsers
+                    const textArea = document.createElement('textarea');
+                    textArea.value = text;
+                    textArea.style.position = 'fixed';
+                    textArea.style.left = '-999999px';
+                    textArea.style.top = '-999999px';
+                    document.body.appendChild(textArea);
+                    textArea.focus();
+                    textArea.select();
+                    
+                    try {
+                        document.execCommand('copy');
+                        showToast('Configuration copied to clipboard!', 'success');
+                    } catch (err) {
+                        console.error('Fallback copy failed:', err);
+                        showToast('Failed to copy configuration', 'error');
+                    } finally {
+                        document.body.removeChild(textArea);
+                    }
+                }
+            } catch (error) {
+                console.error('Error copying to clipboard:', error);
+                showToast('Failed to copy configuration', 'error');
+            }
+        }
+        
+        // Close modal when clicking outside
+        document.getElementById('manualConfigModal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                closeManualConfigModal();
+            }
+        });
+        
+        // Copy manual configuration commands
+        async function copyManualConfig(configId) {
+            try {
+                // Get the configuration data
+                const response = await fetch(`/api/configs/${configId}`);
+                if (!response.ok) {
+                    showToast('Failed to get configuration', 'error');
+                    return;
+                }
+                
+                const config = await response.json();
+                
+                // Generate the manual configuration commands using the same logic as updateManualConfig
+                const baseUrl = config.anthropic_base_url;
+                const apiKey = config.anthropic_api_key || '{{ i18n.t("your_key") }}';
+                const authToken = config.anthropic_auth_token || '';
+                const model = config.anthropic_model || '';
+                const smallModel = config.anthropic_small_fast_model || '';
+                const awsRegion = config.anthropic_small_fast_model_aws_region || '';
+                
+                // Determine which auth method to use
+                const useApiKey = apiKey !== '{{ i18n.t("your_key") }}' && apiKey !== '';
+                const authExport = useApiKey ? `export ANTHROPIC_API_KEY=${apiKey}` : `export ANTHROPIC_AUTH_TOKEN=${authToken}`;
+                const authUnset = useApiKey ? 'unset ANTHROPIC_AUTH_TOKEN' : 'unset ANTHROPIC_API_KEY';
+                
+                // Build optional configuration lines
+                const optionalLines = [];
+                if (model) optionalLines.push(`export ANTHROPIC_MODEL="${model}"`);
+                if (smallModel) optionalLines.push(`export ANTHROPIC_SMALL_FAST_MODEL="${smallModel}"`);
+                if (awsRegion) optionalLines.push(`export ANTHROPIC_SMALL_FAST_MODEL_AWS_REGION="${awsRegion}"`);
+                
+                const optionalConfig = optionalLines.length > 0 ? 
+                    `# Optional configuration\n${optionalLines.join('\n')}` : '';
+                
+                // Create the Unix/Linux configuration
+                const unixConfig = `export ANTHROPIC_BASE_URL=${baseUrl}\n${authExport}\n${authUnset}\n${optionalConfig}`.trim();
+                
+                // Create the Windows configuration
+                const windowsAuthExport = useApiKey ? `$env:ANTHROPIC_API_KEY="${apiKey}"` : `$env:ANTHROPIC_AUTH_TOKEN="${authToken}"`;
+                const windowsAuthUnsetPowerShell = useApiKey ? 'Remove-Item Env:ANTHROPIC_AUTH_TOKEN -ErrorAction SilentlyContinue' : 'Remove-Item Env:ANTHROPIC_API_KEY -ErrorAction SilentlyContinue';
+                const windowsAuthUnsetSetx = useApiKey ? 'setx ANTHROPIC_AUTH_TOKEN ""' : 'setx ANTHROPIC_API_KEY ""';
+                
+                const windowsOptionalLinesPowerShell = [];
+                const windowsOptionalLinesSetx = [];
+                if (model) {
+                    windowsOptionalLinesPowerShell.push(`$env:ANTHROPIC_MODEL="${model}"`);
+                    windowsOptionalLinesSetx.push(`setx ANTHROPIC_MODEL "${model}"`);
+                }
+                if (smallModel) {
+                    windowsOptionalLinesPowerShell.push(`$env:ANTHROPIC_SMALL_FAST_MODEL="${smallModel}"`);
+                    windowsOptionalLinesSetx.push(`setx ANTHROPIC_SMALL_FAST_MODEL "${smallModel}"`);
+                }
+                if (awsRegion) {
+                    windowsOptionalLinesPowerShell.push(`$env:ANTHROPIC_SMALL_FAST_MODEL_AWS_REGION="${awsRegion}"`);
+                    windowsOptionalLinesSetx.push(`setx ANTHROPIC_SMALL_FAST_MODEL_AWS_REGION "${awsRegion}"`);
+                }
+                
+                const windowsOptionalConfigPowerShell = windowsOptionalLinesPowerShell.length > 0 ? 
+                    `# Optional configuration\n${windowsOptionalLinesPowerShell.join('\n')}` : '';
+                const windowsOptionalConfigSetx = windowsOptionalLinesSetx.length > 0 ? 
+                    `# Optional configuration\n${windowsOptionalLinesSetx.join('\n')}` : '';
+                
+                const windowsPowerShellConfig = `$env:ANTHROPIC_BASE_URL="${baseUrl}"
+${windowsAuthExport}
+${windowsAuthUnsetPowerShell}
+${windowsOptionalConfigPowerShell}`.trim();
+                
+                const windowsSetxConfig = `setx ANTHROPIC_BASE_URL "${baseUrl}"
+${useApiKey ? `setx ANTHROPIC_API_KEY "${apiKey}"` : `setx ANTHROPIC_AUTH_TOKEN "${authToken}"`}
+${windowsAuthUnsetSetx}
+${windowsOptionalConfigSetx}`.trim();
+                
+                // Combine both configurations with headers
+                const fullConfig = `# Claude Code Manual Configuration - ${config.name}
+# Generated on ${new Date().toLocaleString()}
+
+# macOS / Linux / WSL
+${unixConfig}
+
+# Windows - PowerShell (Current Session)
+${windowsPowerShellConfig}
+
+# Windows - setx (Persistent - requires restart)
+${windowsSetxConfig}`;
+                
+                // Copy to clipboard
+                await navigator.clipboard.writeText(fullConfig);
+                showToast('Manual configuration commands copied to clipboard!', 'success');
+            } catch (error) {
+                console.error('Error copying manual config:', error);
+                showToast('Failed to copy manual configuration', 'error');
+            }
         }
         
         // Toast notification function

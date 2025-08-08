@@ -56,6 +56,10 @@
     "macos_linux_wsl": "macOS / Windows WSL / Linux",
     "windows_native": "Windows 原生",
     "your_key": "你的密钥",
-    "your_token": "你的令牌"
+    "your_token": "你的令牌",
+    "copy_manual_config": "复制手动配置命令",
+    "copy_commands": "复制命令",
+    "powershell_current_session": "PowerShell (当前会话)",
+    "setx_persistent": "setx (永久保存 - 需要重启)"
   }
 }

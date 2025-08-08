@@ -56,6 +56,10 @@
     "macos_linux_wsl": "macOS / Windows WSL / Linux",
     "windows_native": "Windows Native",
     "your_key": "your_key",
-    "your_token": "your_token"
+    "your_token": "your_token",
+    "copy_manual_config": "Copy Manual Config Commands",
+    "copy_commands": "Copy Commands",
+    "powershell_current_session": "PowerShell (Current Session)",
+    "setx_persistent": "setx (Persistent - requires restart)"
   }
 }
